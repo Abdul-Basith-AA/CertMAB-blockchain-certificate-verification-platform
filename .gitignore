@@ -1,0 +1,30 @@
+node_modules
+.env
+
+# Hardhat files
+/cache
+/artifacts
+
+# TypeChain files
+/typechain
+/typechain-types
+
+# solidity-coverage files
+/coverage
+/coverage.json
+
+# Hardhat Ignition default folder for deployments against a local node
+ignition/deployments/chain-31337
+
+
+# Python & Virtual Environments
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Firebase & Secret Credentials
+firebase-key1.json
+
+# Local contract artifacts
+build/

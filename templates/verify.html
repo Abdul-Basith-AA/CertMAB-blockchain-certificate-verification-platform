@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Verify Certificate</title>
+</head>
+<body>
+  <h2>Welcome {{ company }}!</h2>
+  <form action="/verify" method="POST">
+    Enter Certificate Hash: <input type="text" name="hash"><br><br>
+    <button type="submit">Verify</button>
+  </form>
+</body>
+</html>

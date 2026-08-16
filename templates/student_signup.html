@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Signup - CertChain</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        /* General Body and Font Styles */
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body {
+            background-color: #f8fafc; /* Light gray background */
+            color: #1e293b; /* Dark slate text */
+            overflow-x: hidden;
+        }
+        
+        /* Main Form Card */
+        .form-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0; /* Lighter border */
+            border-radius: 24px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* Input Field Styling */
+        .input-field {
+            background: #f1f5f9; /* Light slate background for inputs */
+            border: 1px solid #cbd5e0;
+            border-radius: 12px;
+            color: #1e293b;
+            transition: all 0.3s ease;
+        }
+        
+        .input-field:focus {
+            background: #ffffff;
+            border-color: #f59e0b; /* Amber focus border */
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+            outline: none;
+        }
+        
+        .input-field::placeholder {
+            color: #94a3b8; /* Slate placeholder text */
+        }
+
+        /* Select Field Specific Styles */
+        select.input-field { 
+            -webkit-appearance: none; 
+            -moz-appearance: none; 
+            appearance: none; 
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); 
+            background-position: right 0.5rem center; 
+            background-repeat: no-repeat; 
+            background-size: 1.5em 1.5em; 
+            padding-right: 2.5rem; 
+        }
+
+        .input-field option { 
+            background: #ffffff; 
+            color: #1e293b; 
+        }
+        
+        /* Primary Button (Kept the original accent color) */
+        .btn-primary {
+            background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+            border-radius: 12px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+        }
+        
+        /* Three.js Canvas Background */
+        #three-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            opacity: 0.15; /* Adjusted opacity for light theme */
+        }
+        
+        /* Decorative Gradient */
+        .hero-gradient {
+            background: radial-gradient(ellipse at center, rgba(234, 179, 8, 0.1) 0%, transparent 70%);
+        }
+        
+        /* Student Icon Badge */
+        .student-badge {
+            background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+            border-radius: 16px;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
+        }
+        
+        /* Error Alert Box */
+        .alert-error {
+            background: #fee2e2; /* Light red background */
+            border: 1px solid #fecaca;
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+    <canvas id="three-canvas"></canvas>
+    <nav class="fixed top-0 w-full z-40 bg-white/80 backdrop-blur-md border-b border-gray-200/80">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <a href="/" class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <span class="text-2xl font-bold text-slate-900">CertChain</span>
+                </a>
+                <a href="/" class="text-gray-600 hover:text-slate-900 transition-colors">← Back to Home</a>
+            </div>
+        </div>
+    </nav>
+    <main class="min-h-screen flex items-center justify-center py-12 pt-24 relative">
+        <div class="hero-gradient absolute inset-0"></div>
+        <div class="max-w-2xl w-full mx-auto px-6 relative z-10">
+            <div class="form-card p-8">
+                <header class="text-center mb-8">
+                    <div class="student-badge">
+                        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                    </div>
+                    <h2 class="text-3xl font-bold text-slate-900 mb-2">Create Student Account</h2>
+                    <p class="text-gray-500">Join CertChain to manage your credentials</p>
+                </header>
+
+                {% if error %}
+                <div class="alert-error p-4 mb-6">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span class="text-red-700 font-medium">{{ error }}</span>
+                    </div>
+                </div>
+                {% endif %}
+
+                <form id="signup-form" method="POST" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 mb-2">Full Name</label>
+                            <input type="text" name="name" class="input-field w-full px-4 py-3" placeholder="Name (as per college provided)" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 mb-2">Email Address</label>
+                            <input type="email" name="email" class="input-field w-full px-4 py-3" placeholder="Enter your email" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 mb-2">Password</label>
+                            <div class="relative">
+                                <input type="password" id="password" name="password" class="input-field w-full px-4 py-3 pr-10" placeholder="Create a strong password" required>
+                                <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-slate-800 focus:outline-none">
+                                    <svg id="eye-open-1" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                    <svg id="eye-closed-1" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 .946-3.11 3.565-5.556 6.818-6.525M16.5 12a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.938 21.938l-14-14 .062-.062M9.875 9.875l-1.437-1.437"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 mb-2">Re-enter Password</label>
+                            <div class="relative">
+                                <input type="password" id="confirm_password" name="confirm_password" class="input-field w-full px-4 py-3 pr-10" placeholder="Confirm your password" required>
+                                <button type="button" id="toggleConfirmPassword" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-slate-800 focus:outline-none">
+                                    <svg id="eye-open-2" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                    <svg id="eye-closed-2" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 .946-3.11 3.565-5.556 6.818-6.525M16.5 12a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.938 21.938l-14-14 .062-.062M9.875 9.875l-1.437-1.437"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 mb-2">Institution Name</label>
+                            <select name="institution_name" class="input-field w-full px-4 py-3" required>
+                                <option value="" disabled selected>Select your institution</option>
+                                {% for name in institutions %}
+                                <option value="{{ name }}">{{ name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 mb-2">Register No / Student ID</label>
+                            <input type="text" name="student_id" class="input-field w-full px-4 py-3" placeholder="Enter your student ID" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 mb-2">Batch</label>
+                            <input type="text" name="batch" class="input-field w-full px-4 py-3" placeholder="e.g., 2023-2027" required pattern="^\d{4}-\d{4}$" title="Please use the format YYYY-YYYY">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 mb-2">Phone Number</label>
+                            <input type="tel" name="phone_number" class="input-field w-full px-4 py-3" placeholder="Enter your phone number" required>
+                        </div>
+                        <div class="md:col-span-2">
+                             <label class="block text-sm font-medium text-gray-600 mb-2">Date of Birth</label>
+                             <input type="date" name="date_of_birth" class="input-field w-full px-4 py-3" required>
+                        </div>
+                    </div>
+                    
+                    <div id="password-error" class="text-red-600 text-sm mt-2 hidden">Passwords do not match.</div>
+
+                    <button type="submit" class="btn-primary w-full py-4 text-white font-semibold flex items-center justify-center mt-6">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                        Create Account
+                    </button>
+                </form>
+                <footer class="text-center mt-6">
+                    <p class="text-sm text-gray-500">
+                        Already have an account? 
+                        <a href="/student-login" class="font-medium text-amber-600 hover:text-amber-500">Log In</a>
+                    </p>
+                </footer>
+            </div>
+        </div>
+    </main>
+    <script>
+        // Three.js background (same as login)
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('three-canvas'), alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        const shapes = [];
+        const dodecaGeometry = new THREE.DodecahedronGeometry(8);
+        const dodecaMaterial = new THREE.MeshBasicMaterial({ color: 0x1e293b, wireframe: true, transparent: true, opacity: 0.8 });
+        const dodecahedron = new THREE.Mesh(dodecaGeometry, dodecaMaterial);
+        dodecahedron.position.set(-30, 0, -20);
+        scene.add(dodecahedron);
+        shapes.push(dodecahedron);
+        const icosaGeometry = new THREE.IcosahedronGeometry(9);
+        const icosaMaterial = new THREE.MeshBasicMaterial({ color: 0x334155, wireframe: true, transparent: true, opacity: 1 });
+        const icosahedron = new THREE.Mesh(icosaGeometry, icosaMaterial);
+        icosahedron.position.set(35, 20, -35);
+        scene.add(icosahedron);
+        shapes.push(icosahedron);
+        camera.position.z = 30;
+        let mouseX = 0;
+        let mouseY = 0;
+        document.addEventListener('mousemove', (event) => {
+            mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+            mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+        });
+        function animate() {
+            requestAnimationFrame(animate);
+            shapes.forEach((shape, index) => {
+                shape.rotation.x += 0.005 + index * 0.001;
+                shape.rotation.y += 0.005 + index * 0.001;
+                shape.position.y += Math.sin(Date.now() * 0.001 + index) * 0.02;
+            });
+            camera.position.x += (mouseX * 3 - camera.position.x) * 0.05;
+            camera.position.y += (mouseY * 3 - camera.position.y) * 0.05;
+            camera.lookAt(scene.position);
+            renderer.render(scene, camera);
+        }
+        animate();
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Form validation for password matching
+        const form = document.getElementById('signup-form');
+        const password = document.getElementById('password');
+        const confirmPassword = document.getElementById('confirm_password');
+        const passwordError = document.getElementById('password-error');
+
+        form.addEventListener('submit', function(e) {
+            if (password.value !== confirmPassword.value) {
+                e.preventDefault();
+                passwordError.classList.remove('hidden');
+                confirmPassword.focus();
+            } else {
+                passwordError.classList.add('hidden');
+            }
+        });
+
+        // Setup password visibility toggles
+        function setupPasswordToggle(toggleId, inputId, eyeOpenId, eyeClosedId) {
+            const toggleButton = document.getElementById(toggleId);
+            const passwordInput = document.getElementById(inputId);
+            const eyeOpen = document.getElementById(eyeOpenId);
+            const eyeClosed = document.getElementById(eyeClosedId);
+
+            toggleButton.addEventListener('click', function () {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                eyeOpen.classList.toggle('hidden');
+                eyeClosed.classList.toggle('hidden');
+            });
+        }
+
+        setupPasswordToggle('togglePassword', 'password', 'eye-open-1', 'eye-closed-1');
+        setupPasswordToggle('toggleConfirmPassword', 'confirm_password', 'eye-open-2', 'eye-closed-2');
+    </script>
+</body>
+</html>

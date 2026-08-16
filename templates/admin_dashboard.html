@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - CertChain</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f8fafc;
+            color: #334155;
+            overflow-x: hidden;
+        }
+        .card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+        .sidebar { 
+            background: #ffffff;
+            border-right: 1px solid #e2e8f0;
+        }
+        .nav-item.active { 
+            background: linear-gradient(135deg, #EF4444 0%, #B91C1C 100%); 
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.2);
+            color: white;
+        }
+        .nav-item:not(.active) {
+            color: #475569;
+        }
+        .nav-item:not(.active):hover { 
+            background: #f1f5f9; 
+            color: #1e293b;
+        }
+        .section-content { display: none; }
+        .section-content.active { display: block; }
+        .animate-fadeIn { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        .modal-backdrop { 
+            background-color: rgba(15, 23, 42, 0.7); 
+            backdrop-filter: blur(5px); 
+        }
+        .form-input { 
+            background: #f8fafc; 
+            border: 1px solid #cbd5e1; 
+            border-radius: 0.5rem; 
+            padding: 0.75rem 1rem;
+            color: #1e293b;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #ef4444;
+            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+        }
+        .sortable-header { cursor: pointer; }
+        .sortable-header:hover { color: #dc2626; }
+        .sort-asc::after { content: ' ▲'; }
+        .sort-desc::after { content: ' ▼'; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #e2e8f0; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+        .hash-text { word-break: break-all; }
+        .details-section {
+            transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        .details-section.open {
+            max-height: 1000px;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="text-slate-700 text-base">
+    
+    <aside class="sidebar fixed top-0 left-0 w-64 h-full z-50">
+        <div class="p-6">
+            <div class="flex items-center space-x-3 mb-10">
+                <div class="w-12 h-12 bg-gradient-to-r from-red-600 to-red-800 rounded-xl flex items-center justify-center shadow-lg">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                </div>
+                <div><h2 class="text-xl font-bold text-slate-800">CertChain</h2><p class="text-xs text-slate-500">Admin Control</p></div>
+            </div>
+            <nav class="space-y-3">
+                <button class="nav-item active w-full text-left px-4 py-3 rounded-xl font-medium transition-all flex items-center space-x-3" onclick="switchTab('dashboard')">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+        <span>Dashboard</span>
+    </button>
+    <button class="nav-item w-full text-left px-4 py-3 rounded-xl font-medium transition-all flex items-center space-x-3" onclick="switchTab('approvals')">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <span>Approval Requests</span>
+    </button>
+    <button class="nav-item w-full text-left px-4 py-3 rounded-xl font-medium transition-all flex items-center space-x-3" onclick="switchTab('institutions')">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+        <span>Institutions</span>
+    </button>
+    <button class="nav-item w-full text-left px-4 py-3 rounded-xl font-medium transition-all flex items-center space-x-3" onclick="switchTab('companies')">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+        <span>Companies</span>
+    </button>
+    <button class="nav-item w-full text-left px-4 py-3 rounded-xl font-medium transition-all flex items-center space-x-3" onclick="switchTab('students')">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"></path></svg>
+        <span>Students</span>
+    </button>
+    <button class="nav-item w-full text-left px-4 py-3 rounded-xl font-medium transition-all flex items-center space-x-3" onclick="switchTab('feedbacks')">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+        <span>Feedbacks</span>
+    </button>
+    <button class="nav-item w-full text-left px-4 py-3 rounded-xl font-medium transition-all flex items-center space-x-3" onclick="switchTab('reports')">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+        <span>Reports</span>
+    </button>
+    <button class="nav-item w-full text-left px-4 py-3 rounded-xl font-medium transition-all flex items-center space-x-3 relative" onclick="switchTab('security-alerts')">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+        <span>Security Alerts</span>
+    </button>
+            </nav>
+            <div class="absolute bottom-6 left-6 right-6">
+                <a href="/logout" class="w-full flex items-center justify-center space-x-3 px-4 py-3 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all text-slate-700 border border-slate-200">
+                    <span>Logout</span>
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <main class="lg:ml-64 transition-all duration-400">
+        <div class="fixed top-6 right-8 z-[60]">
+             <div class="relative">
+                <button id="bell-icon" class="p-3 rounded-full card hover:bg-slate-100 transition-colors">
+                    <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                </button>
+                <span id="notification-count" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center hidden">0</span>
+            </div>
+            <div id="notification-panel" class="absolute top-14 right-0 w-80 card shadow-lg hidden overflow-hidden">
+                <div class="p-3 font-semibold text-slate-800 border-b border-slate-200">Notifications</div>
+                <div id="notification-list" class="max-h-96 overflow-y-auto"></div>
+            </div>
+        </div>
+
+        <div class="container mx-auto px-8 py-10">
+            <header class="mb-10 animate-fadeIn"><h1 id="main-header" class="text-4xl font-bold text-slate-800">Admin Overview</h1></header>
+
+            <div id="dashboard" class="section-content active">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+                    <div onclick="switchTab('institutions')" class="card p-6 text-center transition-all duration-300 hover:transform hover:-translate-y-2 hover:shadow-xl hover:shadow-red-500/10 cursor-pointer"><p class="text-6xl font-bold text-red-600">{{ stats.institutions }}</p><p class="text-slate-500 mt-2 text-lg">Institutions</p></div>
+                    <div onclick="switchTab('companies')" class="card p-6 text-center transition-all duration-300 hover:transform hover:-translate-y-2 hover:shadow-xl hover:shadow-red-500/10 cursor-pointer"><p class="text-6xl font-bold text-red-600">{{ stats.companies }}</p><p class="text-slate-500 mt-2 text-lg">Companies</p></div>
+                    <div onclick="switchTab('students')" class="card p-6 text-center transition-all duration-300 hover:transform hover:-translate-y-2 hover:shadow-xl hover:shadow-red-500/10 cursor-pointer"><p class="text-6xl font-bold text-red-600">{{ stats.students }}</p><p class="text-slate-500 mt-2 text-lg">Students</p></div>
+                    <div onclick="document.getElementById('masterCertificateTable').scrollIntoView({ behavior: 'smooth' });" class="card p-6 text-center transition-all duration-300 hover:transform hover:-translate-y-2 hover:shadow-xl hover:shadow-red-500/10 cursor-pointer"><p class="text-6xl font-bold text-red-600">{{ stats.certificates }}</p><p class="text-slate-500 mt-2 text-lg">Certificates</p></div>
+                    <div onclick="switchTab('approvals')" class="card bg-amber-50 border-amber-200 p-6 text-center transition-all duration-300 hover:transform hover:-translate-y-2 hover:shadow-xl hover:shadow-amber-500/10 cursor-pointer"><p class="text-6xl font-bold text-amber-500">{{ stats.pending_approvals }}</p><p class="text-slate-500 mt-2 text-lg">Pending</p></div>
+                </div>
+
+                <div class="card p-8 mt-10">
+                    <h3 class="font-semibold mb-6 text-2xl text-slate-800">Master Certificate Ledger</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <input type="text" id="masterSearch" placeholder="Search by student, course..." class="form-input w-full col-span-1 md:col-span-1">
+                        <select id="filterType" class="form-input w-full col-span-1">
+                            <option value="all">All Types</option><option value="Degree">Degree</option><option value="Additional">Additional</option>
+                        </select>
+                        <select id="filterInstitution" class="form-input w-full col-span-1">
+                            <option value="all">All Institutions</option>
+                            {% for name in institution_names %}<option value="{{ name }}">{{ name }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="overflow-x-auto max-h-[60vh]">
+                        <table class="w-full text-base" id="masterCertificateTable">
+                            <thead class="sticky top-0 bg-slate-50/80 backdrop-blur-sm">
+                                <tr class="border-b border-slate-200"><th class="p-4 text-left font-semibold sortable-header" onclick="sortTable(0, 'string')">Student Name</th><th class="p-4 text-left font-semibold sortable-header" onclick="sortTable(1, 'string')">Course</th><th class="p-4 text-left font-semibold sortable-header" onclick="sortTable(2, 'string')">Institution</th><th class="p-4 text-left font-semibold sortable-header" onclick="sortTable(3, 'string')">Type</th><th class="p-4 text-left font-semibold sortable-header sort-desc" onclick="sortTable(4, 'date')">Date Issued</th></tr>
+                            </thead>
+                            <tbody id="masterCertificateTbody">
+                                {% for cert in all_certificates %}
+                                <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                                    <td class="p-4 font-medium text-slate-800">{{ cert.name }}</td><td class="p-4 text-slate-600">{{ cert.course }}</td><td class="p-4 text-slate-500">{{ cert.institution_name }}</td>
+                                    <td class="p-4"><span class="px-3 py-1 text-sm rounded-full {{ 'bg-blue-100 text-blue-800' if cert.cert_type == 'Degree' else 'bg-teal-100 text-teal-800' }}">{{ cert.cert_type }}</span></td>
+                                    <td class="p-4 text-slate-500" data-timestamp="{{ cert.timestamp.isoformat() if cert.timestamp else '1970-01-01T00:00:00' }}">{{ cert.timestamp.strftime('%Y-%m-%d') if cert.timestamp else 'N/A' }}</td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="5" class="p-10 text-center text-slate-500 text-lg">No certificates have been issued yet.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="approvals" class="section-content">
+                <div class="card p-8 animate-fadeIn">
+                    <h2 class="text-3xl font-bold mb-6 text-slate-800">Pending Approvals</h2>
+                    <div class="space-y-8">
+                        <div>
+                            <h3 class="font-semibold text-xl text-red-600 mb-4">Institutions</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-base">
+                                    <tbody>
+                                        {% for inst in pending_institutions %}
+                                        <tr class="border-b border-slate-100">
+                                            <td class="p-4 font-semibold text-slate-800">{{ inst.institution_name }}</td>
+                                            <td class="p-4 text-slate-500">{{ inst.email }}</td>
+                                            <td class="p-4 flex space-x-2 justify-end">
+                                                <button onclick="showDetailsModal('institution', '{{ inst.email }}')" class="px-4 py-2 text-sm rounded-md text-white bg-slate-600 hover:bg-slate-700 transition-colors">View</button>
+                                                <a href="/approve-institution/{{ inst.email }}" class="px-4 py-2 text-sm rounded-md text-white bg-green-600 hover:bg-green-700 transition-colors">Approve</a>
+                                                <a href="/deny-institution/{{ inst.email }}" onclick="return confirm('Deny this request?')" class="px-4 py-2 text-sm rounded-md text-white bg-amber-600 hover:bg-amber-700 transition-colors">Deny</a>
+                                            </td>
+                                        </tr>
+                                        {% else %}
+                                        <tr><td class="p-6 text-center text-slate-500">No pending institution approvals.</td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-xl text-red-600 mb-4">Companies</h3>
+                             <div class="overflow-x-auto">
+                                <table class="w-full text-base">
+                                    <tbody>
+                                        {% for comp in pending_companies %}
+                                        <tr class="border-b border-slate-100">
+                                            <td class="p-4 font-semibold text-slate-800">{{ comp.company_name }}</td>
+                                            <td class="p-4 text-slate-500">{{ comp.email }}</td>
+                                            <td class="p-4 flex space-x-2 justify-end">
+                                                <button onclick="showDetailsModal('company', '{{ comp.email }}')" class="px-4 py-2 text-sm rounded-md text-white bg-slate-600 hover:bg-slate-700 transition-colors">View</button>
+                                                <a href="/approve-company/{{ comp.email }}" class="px-4 py-2 text-sm rounded-md text-white bg-green-600 hover:bg-green-700 transition-colors">Approve</a>
+                                                <a href="/deny-company/{{ comp.email }}" onclick="return confirm('Deny this request?')" class="px-4 py-2 text-sm rounded-md text-white bg-amber-600 hover:bg-amber-700 transition-colors">Deny</a>
+                                            </td>
+                                        </tr>
+                                        {% else %}
+                                        <tr><td class="p-6 text-center text-slate-500">No pending company approvals.</td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="institutions" class="section-content">
+                <div class="card p-8 animate-fadeIn"><h2 class="text-3xl font-bold mb-6 text-slate-800">Manage Institutions</h2><div class="overflow-x-auto"><table class="w-full text-base"><thead class="border-b border-slate-200"><tr><th class="p-4 text-left font-semibold">Name</th><th class="p-4 text-left font-semibold">Email</th><th class="p-4 text-left font-semibold">Status</th><th class="p-4 text-right font-semibold">Actions</th></tr></thead><tbody>
+                {% for inst in all_institutions %}<tr class="border-b border-slate-100"><td class="p-4 font-medium text-slate-800">{{ inst.institution_name }}</td><td class="p-4 text-slate-500">{{ inst.email }}</td><td class="p-4"><span class="px-3 py-1 text-sm rounded-full {{ 'bg-green-100 text-green-800' if inst.approved else 'bg-yellow-100 text-yellow-800' }}">{{ 'Approved' if inst.approved else 'Pending' }}</span></td><td class="p-4 text-right"><button onclick="showDetailsModal('institution', '{{ inst.email }}')" class="px-4 py-2 text-sm rounded-md text-white bg-slate-600 hover:bg-slate-700 transition-colors">View Details</button></td></tr>{% endfor %}
+                </tbody></table></div></div>
+            </div>
+
+            <div id="companies" class="section-content">
+                 <div class="card p-8 animate-fadeIn"><h2 class="text-3xl font-bold mb-6 text-slate-800">Manage Companies</h2><div class="overflow-x-auto"><table class="w-full text-base"><thead class="border-b border-slate-200"><tr><th class="p-4 text-left font-semibold">Name</th><th class="p-4 text-left font-semibold">Email</th><th class="p-4 text-left font-semibold">Status</th><th class="p-4 text-right font-semibold">Actions</th></tr></thead><tbody>
+                {% for comp in all_companies %}<tr class="border-b border-slate-100"><td class="p-4 font-medium text-slate-800">{{ comp.company_name }}</td><td class="p-4 text-slate-500">{{ comp.email }}</td><td class="p-4"><span class="px-3 py-1 text-sm rounded-full {{ 'bg-green-100 text-green-800' if comp.approved else 'bg-yellow-100 text-yellow-800' }}">{{ 'Approved' if comp.approved else 'Pending' }}</span></td><td class="p-4 text-right"><button onclick="showDetailsModal('company', '{{ comp.email }}')" class="px-4 py-2 text-sm rounded-md text-white bg-slate-600 hover:bg-slate-700 transition-colors">View Details</button></td></tr>{% endfor %}
+                </tbody></table></div></div>
+            </div>
+
+            <div id="students" class="section-content">
+                 <div class="card p-8 animate-fadeIn"><h2 class="text-3xl font-bold mb-6 text-slate-800">Manage Students</h2><div class="overflow-x-auto"><table class="w-full text-base"><thead class="border-b border-slate-200"><tr><th class="p-4 text-left font-semibold">Name</th><th class="p-4 text-left font-semibold">Email</th><th class="p-4 text-left font-semibold">Institution</th><th class="p-4 text-right font-semibold">Actions</th></tr></thead><tbody>
+                {% for student in all_students %}<tr class="border-b border-slate-100"><td class="p-4 font-medium text-slate-800">{{ student.name }}</td><td class="p-4 text-slate-500">{{ student.email }}</td><td class="p-4 text-slate-500">{{ student.institution_name }}</td><td class="p-4 flex space-x-2 justify-end"><button onclick="showDetailsModal('student', '{{ student.uid }}')" class="px-4 py-2 text-sm rounded-md text-white bg-slate-600 hover:bg-slate-700 transition-colors">View Details</button><a href="/remove-student/{{ student.uid }}" onclick="return confirm('Permanently delete this student?')" class="px-4 py-2 text-sm rounded-md text-white bg-red-600 hover:bg-red-700 transition-colors">Remove</a></td></tr>{% endfor %}
+                </tbody></table></div></div>
+            </div>
+
+            <div id="feedbacks" class="section-content">
+                <div class="card p-8 animate-fadeIn">
+                    <h2 class="text-3xl font-bold mb-6 text-slate-800">User Feedbacks</h2>
+                    <div class="space-y-4 max-h-[80vh] overflow-y-auto pr-2">
+                        {% for feedback in all_feedback %}
+                        <div class="border bg-slate-50 p-5 rounded-lg {% if not feedback.read %} border-l-4 border-yellow-400 {% else %} border-l-4 border-transparent {% endif %}">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <p class="font-bold text-lg text-slate-800">{{ feedback.sender_name }} 
+                                        <span class="text-sm font-normal px-2 py-1 rounded-full align-middle
+                                            {% if feedback.sender_type == 'student' %} bg-amber-100 text-amber-800
+                                            {% elif feedback.sender_type == 'institution' %} bg-blue-100 text-blue-800
+                                            {% elif feedback.sender_type == 'company' %} bg-green-100 text-green-800
+                                            {% endif %}">
+                                            {{ feedback.sender_type|capitalize }}
+                                        </span>
+                                    </p>
+                                    <p class="text-sm text-slate-500">{{ feedback.sender_email }}</p>
+                                </div>
+                                <span class="text-sm text-slate-400 flex-shrink-0 ml-4">{{ feedback.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
+                            </div>
+                            <div class="mt-3 bg-white border border-slate-200 p-4 rounded-md">
+                                <p class="text-base text-slate-700 font-semibold">[{{ feedback.category }}] {{ feedback.subject }}</p>
+                                <p class="text-base text-slate-600 mt-1 whitespace-pre-wrap">{{ feedback.message }}</p>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="text-center p-10 text-slate-500">
+                            <p class="text-lg">There are no feedbacks submitted yet.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div id="security-alerts" class="section-content">
+                <div class="space-y-6 animate-fadeIn">
+                    <h2 class="text-3xl font-bold mb-4 text-slate-800">Security & Data Integrity Alerts</h2>
+                    {% if all_discrepancies %}
+                        {% for alert in all_discrepancies %}
+                            {% set is_resolved = alert.status == 'resolved' %}
+                            <div class="alert-card card overflow-hidden {{ 'bg-red-50 border-red-200' if not is_resolved else '' }}" data-id="{{ alert.id }}">
+                                <div class="p-5 flex items-start space-x-4">
+                                    <div class="flex-shrink-0 pt-1">
+                                        {% if is_resolved %}
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                        {% else %}
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow">
+                                        <div class="flex justify-between items-center">
+                                            <h3 class="text-lg font-semibold text-slate-800">{{ alert.issue }}</h3>
+                                            <span class="text-sm font-medium px-2.5 py-0.5 rounded-full {{ 'bg-green-100 text-green-800' if is_resolved else 'bg-yellow-100 text-yellow-800' }}">{{ alert.status }}</span>
+                                        </div>
+                                        <p class="text-sm text-slate-500 mt-1">Detected on: {{ alert.timestamp_str or 'N/A' }}</p>
+                                        <p class="text-sm text-slate-700 font-mono mt-2 hash-text"><strong>Hash:</strong> {{ alert.certificateHash }}</p>
+                                        <div class="mt-4 space-x-4">
+                                            <button class="toggle-details-btn text-sm font-medium text-red-600 hover:text-red-800">View Details</button>
+                                            {% if not is_resolved %}
+                                                <button class="resolve-btn text-sm font-medium text-green-600 hover:text-green-800" data-id="{{ alert.id }}">Mark as Resolved</button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="details-section bg-slate-50 px-5 py-4 border-t border-slate-200">
+                                    <h4 class="font-semibold mb-3 text-slate-800">Discrepancy Details</h4>
+                                    <div class="text-sm font-mono space-y-3">
+                                        {% if alert.details.mismatches %}
+                                            {% for mismatch in alert.details.mismatches %}
+                                                <div class="bg-white border border-slate-200 p-3 rounded-md">
+                                                    <p class="font-sans font-medium text-slate-500 mb-2">Field: <span class="text-slate-800">{{ mismatch.field }}</span></p>
+                                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                        <div>
+                                                            <p class="font-sans text-xs text-red-600 mb-1">Firebase Value:</p>
+                                                            <pre class="text-red-700 break-words whitespace-pre-wrap">{{ mismatch.firebase }}</pre>
+                                                        </div>
+                                                        <div>
+                                                            <p class="font-sans text-xs text-green-600 mb-1">Blockchain Value:</p>
+                                                            <pre class="text-green-700 break-words whitespace-pre-wrap">{{ mismatch.blockchain }}</pre>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        {% elif alert.details.blockchainData %}
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                 <div>
+                                                    <p class="font-sans font-medium text-slate-500 mb-1">Blockchain Record:</p>
+                                                    <pre class="bg-white border p-3 rounded-md overflow-auto text-slate-700">{{ alert.details.blockchainData | tojson(indent=2) }}</pre>
+                                                </div>
+                                                <div>
+                                                     <p class="font-sans font-medium text-slate-500 mb-1">Firebase Record:</p>
+                                                     <pre class="bg-white border border-red-200 p-3 rounded-md overflow-auto text-red-600">'Record not found'</pre>
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            <p class="text-slate-500">Details for this alert type are not formatted for display.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center card p-10">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-green-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            <h2 class="mt-4 text-xl font-semibold text-slate-800">All Systems Nominal</h2>
+                            <p class="mt-2 text-slate-500">No data integrity issues found. The cross-verification system is running smoothly.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div id="reports" class="section-content">
+                <div class="card p-6 md:p-8 animate-fadeIn" id="report-content-to-export">
+                    <div class="flex flex-col md:flex-row justify-between md:items-center mb-8 gap-4">
+                        <h2 class="text-3xl font-bold text-slate-800">Platform Analytics Report</h2>
+                        <button id="export-pdf-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg flex items-center space-x-2 transition-transform hover:scale-105">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            <span>Export as PDF</span>
+                        </button>
+                    </div>
+
+                    <div id="report-loader" class="text-center py-16">
+                        <div class="w-12 h-12 border-4 border-t-red-600 border-gray-200 rounded-full animate-spin mx-auto"></div>
+                        <p class="mt-4 text-slate-500">Generating AI-powered visuals and analytics...</p>
+                    </div>
+
+                    <div id="charts-container" class="hidden space-y-12">
+                        <div>
+                            <h3 class="text-xl font-semibold text-slate-700 mb-4">Registration & Issuance Trends</h3>
+                            <div class="card p-4 bg-slate-50"><canvas id="timeSeriesChart"></canvas></div>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <div>
+                                <h3 class="text-xl font-semibold text-slate-700 mb-4">Certificate Type Distribution</h3>
+                                <div class="card p-4 bg-slate-50 flex justify-center items-center h-80"><canvas id="certTypeChart"></canvas></div>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold text-slate-700 mb-4">User Type Distribution</h3>
+                                <div class="card p-4 bg-slate-50 flex justify-center items-center h-80"><canvas id="userTypeChart"></canvas></div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <div>
+                                <h3 class="text-xl font-semibold text-slate-700 mb-4">Top 5 Institutions by Certificates Issued</h3>
+                                <div class="card p-4 bg-slate-50"><canvas id="topInstitutionsChart"></canvas></div>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold text-slate-700 mb-4">Top 5 Companies by Verifications</h3>
+                                <div class="card p-4 bg-slate-50"><canvas id="topCompaniesChart"></canvas></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="detailsModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 modal-backdrop hidden">
+        <div class="card w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <header class="p-6 border-b border-slate-200 flex justify-between items-center shrink-0">
+                <h2 id="modalTitle" class="text-2xl font-bold text-slate-800">Details</h2>
+                <button onclick="hideDetailsModal()" class="p-2 text-3xl leading-none text-slate-500 hover:bg-slate-100 rounded-full">&times;</button>
+            </header>
+            <div id="modalContent" class="p-6 overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <script>
+        const searchInput = document.getElementById('masterSearch');
+        const typeFilter = document.getElementById('filterType');
+        const institutionFilter = document.getElementById('filterInstitution');
+        const tableBody = document.getElementById('masterCertificateTbody');
+        const table = document.getElementById('masterCertificateTable');
+        const tableHeaders = table ? table.querySelectorAll('th') : [];
+        const mainHeader = document.getElementById('main-header');
+        const modal = document.getElementById("detailsModal");
+        const modalTitle = document.getElementById("modalTitle");
+        const modalContent = document.getElementById("modalContent");
+
+        function switchTab(tabId) {
+            document.querySelectorAll(".section-content").forEach(el => el.classList.remove("active"));
+            document.getElementById(tabId).classList.add("active");
+            document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
+            const t = Array.from(document.querySelectorAll(".nav-item")).find(el => el.getAttribute("onclick").includes(tabId));
+            if (t) {
+                t.classList.add("active");
+                mainHeader.textContent = t.querySelector('span').textContent === 'Dashboard' ? 'Admin Overview' : t.querySelector('span').textContent;
+            }
+            if (tabId === 'reports' && !document.getElementById('charts-container').dataset.loaded) {
+                loadReportData();
+            }
+        }
+
+        let charts = {}; // To keep track of chart instances and prevent duplicates
+
+        function destroyChart(chartId) {
+            if (charts[chartId]) {
+                charts[chartId].destroy();
+                delete charts[chartId];
+            }
+        }
+
+        async function loadReportData() {
+            const loader = document.getElementById('report-loader');
+            const container = document.getElementById('charts-container');
+            loader.style.display = 'block';
+            container.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/admin/reports');
+                if (!response.ok) throw new Error('Failed to fetch report data');
+                const data = await response.json();
+
+                initTimeSeriesChart(data.time_series);
+                initPieChart('certTypeChart', 'Certificate Types', data.cert_type_distribution);
+                initPieChart('userTypeChart', 'User Types', data.user_type_distribution);
+                initBarChart('topInstitutionsChart', 'Top 5 Institutions by Certificates Issued', data.top_institutions, 'Certificates');
+                initBarChart('topCompaniesChart', 'Top 5 Companies by Verifications Made', data.top_companies, 'Verifications');
+
+                container.dataset.loaded = 'true';
+                loader.style.display = 'none';
+                container.style.display = 'block';
+
+            } catch (error) {
+                console.error('Error loading report data:', error);
+                loader.innerHTML = '<p class="text-red-500 font-semibold">Could not load reports. Please try again later.</p>';
+            }
+        }
+
+        function initTimeSeriesChart(data) {
+            const ctx = document.getElementById('timeSeriesChart').getContext('2d');
+            destroyChart('timeSeriesChart');
+            charts['timeSeriesChart'] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.dates,
+                    datasets: [{
+                        label: 'Certificates Issued', data: data.certificates, borderColor: '#EF4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', tension: 0.2, fill: true
+                    }, {
+                        label: 'User Registrations', data: data.registrations, borderColor: '#3B82F6', backgroundColor: 'rgba(59, 130, 246, 0.1)', tension: 0.2, fill: true
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' } } }
+            });
+        }
+
+        function initPieChart(canvasId, label, data) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            destroyChart(canvasId);
+            charts[canvasId] = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(data),
+                    datasets: [{
+                        label: label,
+                        data: Object.values(data),
+                        backgroundColor: ['#EF4444', '#3B82F6', '#10B981', '#F59E0B', '#6366F1'],
+                        borderColor: '#ffffff',
+                        borderWidth: 2,
+                        hoverOffset: 4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+            });
+        }
+
+        function initBarChart(canvasId, label, data, dataLabel) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            destroyChart(canvasId);
+            charts[canvasId] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(item => item.name),
+                    datasets: [{
+                        label: dataLabel,
+                        data: data.map(item => item.count),
+                        backgroundColor: ['#EF4444', '#DC2626', '#B91C1C', '#991B1B', '#7F1D1D'],
+                        borderRadius: 4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: true, indexAxis: 'y', plugins: { legend: { display: false } } }
+            });
+        }
+
+        document.getElementById('export-pdf-btn').addEventListener('click', () => {
+            const { jsPDF } = window.jspdf;
+            const reportContent = document.getElementById('report-content-to-export');
+            const loader = document.getElementById('report-loader');
+            
+            const wasLoaderHidden = loader.style.display === 'none';
+            if(wasLoaderHidden === false) {
+                alert("Please wait for the report to finish generating before exporting.");
+                return;
+            }
+            
+            alert('PDF generation will begin. This may take a moment.');
+
+            html2canvas(reportContent, { scale: 2, backgroundColor: '#f8fafc' }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save('CertChain_Analytics_Report.pdf');
+            });
+        });
+
+        function showDetailsModal(type, id) {
+            fetch(`/api/admin/view/${type}/${id}`).then(res => res.json()).then(data => {
+                if (data.error) {
+                    modalTitle.textContent = 'Error';
+                    modalContent.innerHTML = `<p class="text-red-500">${data.error}</p>`;
+                } else {
+                    modalTitle.textContent = `Details for ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+                    modalContent.innerHTML = buildDetailsView(type, data);
+                }
+                modal.classList.remove("hidden");
+            });
+        }
+
+        function buildDetailsView(type, data) {
+            let detailsHtml = '<div class="grid grid-cols-1 md:grid-cols-2 gap-6">';
+            detailsHtml += `<div><h3 class="font-semibold text-xl text-red-600 mb-3">Profile Information</h3><div class="space-y-3 text-base">`;
+            const excludedKeys = ["students", "certificates", "verification_history", "password", "approved", "password_hash"];
+            for (const key in data) {
+                if (!excludedKeys.includes(key)) {
+                    let value = data[key];
+                    const fKey = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+                    if (typeof value === "string" && (value.includes("ipfs") || value.startsWith("http"))) {
+                        value = `<a href="${value}" target="_blank" class="text-blue-600 hover:underline break-all">${value}</a>`;
+                    }
+                    detailsHtml += `<div class="bg-slate-50 p-3 rounded-md grid grid-cols-3 gap-2 items-start"><strong class="text-slate-500 col-span-1">${fKey}</strong><span class="col-span-2 break-words text-slate-800">${value || 'N/A'}</span></div>`;
+                }
+            }
+            detailsHtml += "</div></div>";
+            if (type === "institution" && data.students) {
+                detailsHtml += `<div><h3 class="font-semibold text-xl text-red-600 mb-3">Associated Data</h3><div class="space-y-3 text-base"><div class="bg-slate-50 p-3 rounded-md"><strong class="text-slate-500">Certificates Issued:</strong> ${data.certificates ? data.certificates.length : 0}</div><div class="bg-slate-50 p-3 rounded-md"><strong class="text-slate-500">Registered Students:</strong> ${data.students.length}</div></div><h3 class="font-semibold text-xl text-red-600 mt-6 mb-3">Student List</h3><div class="max-h-60 overflow-y-auto text-base space-y-2 pr-2">`;
+                data.students.forEach(s => { detailsHtml += `<div class="bg-slate-100 p-3 rounded-md">${s.name} - ${s.email}</div>` });
+                detailsHtml += "</div></div>"
+            } else if (type === "company" && data.verification_history) {
+                detailsHtml += `<div><h3 class="font-semibold text-xl text-red-600 mb-3">Verification History (${data.verification_history.length})</h3><div class="max-h-80 overflow-y-auto text-base space-y-2 pr-2">`;
+                data.verification_history.forEach(v => { detailsHtml += `<div class="bg-slate-100 p-3 rounded-md"><strong>${v.student_name||"N/A"}</strong> (${v.course||"N/A"}) on ${v.verified_at}</div>` });
+                detailsHtml += "</div></div>"
+            } else if (type === "student" && data.certificates) {
+                detailsHtml += `<div><h3 class="font-semibold text-xl text-red-600 mb-3">Certificates (${data.certificates.length})</h3><div class="max-h-80 overflow-y-auto text-base space-y-2 pr-2">`;
+                data.certificates.forEach(c => { detailsHtml += `<div class="bg-slate-100 p-3 rounded-md">${c.course} from ${c.institute||c.main_institute}</div>` });
+                detailsHtml += "</div></div>"
+            }
+            return detailsHtml + "</div>";
+        }
+
+        function hideDetailsModal() { modal.classList.add("hidden"); }
+
+        function applyFilters() {
+            if (!tableBody) return;
+            const searchTerm = searchInput.value.toLowerCase();
+            const typeValue = typeFilter.value;
+            const institutionValue = institutionFilter.value;
+            for (const row of tableBody.rows) {
+                const searchMatch = (row.cells[0].textContent.toLowerCase().includes(searchTerm) || row.cells[1].textContent.toLowerCase().includes(searchTerm));
+                const typeMatch = (typeValue === 'all') || (row.cells[3].textContent.trim() === typeValue);
+                const institutionMatch = (institutionValue === 'all') || (row.cells[2].textContent.trim() === institutionValue);
+                row.style.display = (searchMatch && typeMatch && institutionMatch) ? '' : 'none';
+            }
+        }
+
+        let sortDirection = {};
+        function sortTable(columnIndex, type) {
+            if (!tableBody) return;
+            const rows = Array.from(tableBody.rows);
+            const direction = sortDirection[columnIndex] === 'asc' ? 'desc' : 'asc';
+            sortDirection = {};
+            sortDirection[columnIndex] = direction;
+            tableHeaders.forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+            tableHeaders[columnIndex].classList.add(direction === 'asc' ? 'sort-asc' : 'sort-desc');
+            rows.sort((rowA, rowB) => {
+                let valA = (type === 'date') ? new Date(rowA.cells[columnIndex].dataset.timestamp) : rowA.cells[columnIndex].textContent.trim().toLowerCase();
+                let valB = (type === 'date') ? new Date(rowB.cells[columnIndex].dataset.timestamp) : rowB.cells[columnIndex].textContent.trim().toLowerCase();
+                if (valA < valB) return direction === 'asc' ? -1 : 1;
+                if (valA > valB) return direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+            rows.forEach(row => tableBody.appendChild(row));
+        }
+
+        async function loadNotifications() {
+            try {
+                const response = await fetch('/api/notifications');
+                if (!response.ok) throw new Error('Failed to fetch notifications');
+                const notifications = await response.json();
+                renderNotifications(notifications);
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+                const list = document.getElementById('notification-list');
+                if(list) list.innerHTML = `<div class="p-4 text-sm text-slate-500">Could not load notifications.</div>`;
+            }
+        }
+
+        function renderNotifications(notifications) {
+            const notificationList = document.getElementById('notification-list');
+            const notificationCount = document.getElementById('notification-count');
+            if (!notificationList || !notificationCount) return;
+            if (notifications.length === 0) {
+                notificationList.innerHTML = `<div class="p-4 text-sm text-center text-slate-500">No new notifications.</div>`;
+                notificationCount.classList.add('hidden');
+                notificationCount.textContent = '0';
+            } else {
+                notificationList.innerHTML = '';
+                notifications.forEach(notif => {
+                    const notifElement = document.createElement('a');
+                    notifElement.href = notif.link || '#';
+                    notifElement.className = 'block p-3 border-b border-slate-100 hover:bg-slate-50 transition-colors';
+                    const timeAgo = getTimeAgo(notif.timestamp);
+                    notifElement.innerHTML = `<p class="text-sm text-slate-700">${notif.message}</p><p class="text-xs text-slate-400 mt-1">${timeAgo}</p>`;
+                    notificationList.appendChild(notifElement);
+                });
+                const clearButtonContainer = document.createElement('div');
+                clearButtonContainer.className = 'p-2 text-center border-t border-slate-200';
+                clearButtonContainer.innerHTML = `<button id="clear-notifications-btn" class="text-sm text-red-600 hover:text-red-800">Clear All</button>`;
+                notificationList.appendChild(clearButtonContainer);
+                document.getElementById('clear-notifications-btn').addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    if (confirm('Are you sure you want to clear all notifications?')) {
+                        await fetch('/api/notifications/delete-viewed', { method: 'POST' });
+                        loadNotifications();
+                    }
+                });
+                notificationCount.textContent = notifications.length;
+                notificationCount.classList.remove('hidden');
+            }
+        }
+
+        function getTimeAgo(isoString) {
+            const date = new Date(isoString);
+            const seconds = Math.floor((new Date() - date) / 1000);
+            let interval = Math.floor(seconds / 31536000);
+            if (interval > 1) return `${interval} years ago`;
+            interval = Math.floor(seconds / 2592000);
+            if (interval > 1) return `${interval} months ago`;
+            interval = Math.floor(seconds / 86400);
+            if (interval > 1) return `${interval} days ago`;
+            interval = Math.floor(seconds / 3600);
+            if (interval > 1) return `${interval} hours ago`;
+            interval = Math.floor(seconds / 60);
+            if (interval > 1) return `${interval} minutes ago`;
+            return `${Math.floor(seconds)} seconds ago`;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadNotifications();
+            const bellIcon = document.getElementById('bell-icon');
+            const notificationPanel = document.getElementById('notification-panel');
+            if (bellIcon && notificationPanel) {
+                bellIcon.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    notificationPanel.classList.toggle('hidden');
+                });
+                document.addEventListener('click', (e) => {
+                    if (!notificationPanel.contains(e.target) && !bellIcon.contains(e.target)) {
+                        notificationPanel.classList.add('hidden');
+                    }
+                });
+            }
+            if (searchInput) searchInput.addEventListener('keyup', applyFilters);
+            if (typeFilter) typeFilter.addEventListener('change', applyFilters);
+            if (institutionFilter) institutionFilter.addEventListener('change', applyFilters);
+        });
+
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('toggle-details-btn')) {
+                const detailsSection = e.target.closest('.alert-card').querySelector('.details-section');
+                detailsSection.classList.toggle('open');
+                e.target.textContent = detailsSection.classList.contains('open') ? 'Hide Details' : 'View Details';
+            }
+            if (e.target.classList.contains('resolve-btn')) {
+                const docId = e.target.dataset.id;
+                if (!confirm('Are you sure you want to mark this issue as resolved?')) return;
+                fetch(`/api/discrepancies/${docId}/resolve`, { method: 'POST' })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Failed to update status');
+                        location.reload();
+                    })
+                    .catch(error => {
+                        console.error('Error resolving discrepancy:', error);
+                        alert('Could not resolve the issue. Please check the console.');
+                    });
+            }
+        });
+    </script>
+
+</body>
+</html>

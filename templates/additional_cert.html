@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Additional Certificate - CertChain</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #F9FAFB; overflow-x: hidden; }
+        .gradient-bg { background: linear-gradient(135deg, #FFFFFF 0%, #F0F2F5 100%); min-height: 100vh; }
+        .glass-card { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(0, 0, 0, 0.08); border-radius: 24px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .glass-card:hover { background: rgba(255, 255, 255, 0.9); border-color: rgba(99, 102, 241, 0.3); box-shadow: 0 25px 50px -12px rgba(99, 102, 241, 0.15); }
+        .navbar { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0, 0, 0, 0.08); }
+        .btn-primary { background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%); border-radius: 12px; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4); border: none; cursor: pointer; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(99, 102, 241, 0.6); }
+        .btn-secondary { background: #FFFFFF; border: 1px solid #D1D5DB; color: #4B5563; border-radius: 12px; font-weight: 600; transition: all 0.3s ease; }
+        .btn-secondary:hover { background: #F9FAFB; border-color: #6B7280; transform: translateY(-2px); }
+        .form-input { background: #FFFFFF; border: 1px solid #D1D5DB; border-radius: 12px; padding: 16px; color: #111827; font-size: 16px; transition: all 0.3s ease; width: 100%; }
+        .form-input:focus { outline: none; border-color: rgba(99, 102, 241, 0.5); background: #FFFFFF; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+        .form-input::placeholder { color: #9CA3AF; }
+        select.form-input option { background-color: #FFFFFF; color: #111827; }
+        .form-label { color: #374151; font-weight: 500; margin-bottom: 8px; display: block; }
+        .file-upload-area { border: 2px dashed rgba(99, 102, 241, 0.3); border-radius: 16px; background: rgba(99, 102, 241, 0.05); padding: 40px 20px; text-align: center; transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; }
+        .file-upload-area:hover { border-color: rgba(99, 102, 241, 0.5); background: rgba(99, 102, 241, 0.1); }
+        .section-title { font-size: 2.5rem; font-weight: 800; background: linear-gradient(135deg, #1F2937 0%, #6366F1 100%); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.1; margin-bottom: 1rem; }
+        #three-canvas { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.15; }
+        .success-message { background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.2); }
+        .progress-bar { background: #E5E7EB; border-radius: 8px; overflow: hidden; height: 8px; margin-top: 16px; }
+        .progress-fill { background: linear-gradient(90deg, #6366F1 0%, #8B5CF6 100%); height: 100%; transition: width 0.3s ease; border-radius: 8px; }
+        .certificate-icon { background: linear-gradient(135deg, #10B981 0%, #059669 100%); border-radius: 16px; width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; }
+    </style>
+</head>
+<body class="text-gray-800 gradient-bg">
+    <canvas id="three-canvas"></canvas>
+    <nav class="navbar fixed top-0 w-full z-40">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <span class="text-2xl font-bold text-gray-900">CertChain</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/institution-dashboard" class="btn-secondary px-6 py-3 font-semibold">Back to Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <section class="min-h-screen flex items-center justify-center pt-24 pb-16 relative">
+        <div class="max-w-4xl mx-auto px-6 w-full">
+            <div class="text-center mb-12">
+                <div class="certificate-icon"><svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg></div>
+                <h1 class="section-title">Upload Additional Certificate</h1>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">Secure your professional certifications, training programs, and specialized credentials on the blockchain.</p>
+            </div>
+
+            <div class="glass-card p-8 md:p-12">
+                <form action="/upload" method="POST" enctype="multipart/form-data" id="certificateForm">
+                    <input type="hidden" name="cert_type" value="additional">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="space-y-6">
+                            <div>
+                                <label class="form-label">Student/Participant Name *</label>
+                                <input type="text" name="name" class="form-input" placeholder="Enter full name as on certificate" required>
+                            </div>
+                            
+                            <div>
+                                <label class="form-label">Main Institute/University *</label>
+                                <input type="text" name="main_institute" class="form-input cursor-not-allowed bg-gray-100 text-gray-500" value="{{ institution_name }}" readonly>
+                            </div>
+                            
+                            <div>
+                                <label class="form-label">Course/Program Name *</label>
+                                <select name="course" class="form-input" required>
+                                    <option value="">Select Certificate Type</option>
+                                    <option value="Professional Certificate">Professional Certificate</option>
+                                    <option value="Online Course">Online Course Completion</option>
+                                    <option value="Workshop">Workshop Certificate</option>
+                                    <option value="Training Program">Training Program</option>
+                                    <option value="Skill Certification">Skill Certification</option>
+                                    <option value="Industry Certificate">Industry Certificate</option>
+                                    <option value="Language Proficiency">Language Proficiency</option>
+                                    <option value="Software Certification">Software Certification</option>
+                                    <option value="Internship Certificate">Internship Certificate</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="form-label">Certificate ID (CID) *</label>
+                                <input type="text" name="cid" class="form-input" placeholder="Unique certificate identifier" required>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div>
+                                <label class="form-label">Email Address *</label>
+                                <input type="email" name="email" class="form-input" placeholder="your.email@domain.com" required>
+                            </div>
+                            
+                            <div>
+                                <label class="form-label">Start Date *</label>
+                                <input type="date" name="start" class="form-input" required>
+                            </div>
+                            
+                            <div>
+                                <label class="form-label">End Date *</label>
+                                <input type="date" name="end" class="form-input" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8">
+                        <label class="form-label">Certificate Image *</label>
+                        <div class="file-upload-area" id="fileUploadArea">
+                            <input type="file" name="image" accept="image/*,application/pdf" id="fileInput" class="hidden" required>
+                            <div id="uploadContent">
+                                <svg class="w-12 h-12 mx-auto mb-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                                <p class="text-lg font-medium text-indigo-700 mb-2">Drop your certificate here</p>
+                                <p class="text-sm text-gray-500 mb-4">or click to browse files</p>
+                                <div class="btn-secondary inline-block px-6 py-2 text-sm">Choose File</div>
+                                <p class="text-xs text-gray-400 mt-4">Supported formats: JPG, PNG, PDF (Max size: 10MB)</p>
+                            </div>
+                            <div id="filePreview" class="hidden"><img id="previewImage" class="max-w-full max-h-64 mx-auto rounded-lg mb-4" alt="Certificate preview"><p id="fileName" class="text-sm text-gray-600"></p><button type="button" onclick="clearFile()" class="text-red-500 hover:text-red-700 text-sm mt-2">Remove file</button></div>
+                        </div>
+                    </div>
+                    
+                    <div id="uploadProgress" class="hidden mt-6">
+                        <div class="flex justify-between text-sm text-gray-600 mb-2"><span>Uploading to blockchain...</span><span id="progressPercent">0%</span></div>
+                        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 0%"></div></div>
+                    </div>
+                    
+                    <div class="mt-10 text-center">
+                        <button type="submit" class="btn-primary text-white px-12 py-4 text-lg font-semibold inline-flex items-center" id="submitBtn"><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>Upload Certificate</button>
+                    </div>
+                </form>
+
+                <div id="successMessage" class="hidden mt-8 p-6 rounded-2xl success-message text-center">
+                    <div class="w-16 h-16 mx-auto mb-4 bg-green-500 rounded-full flex items-center justify-center"><svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Certificate Uploaded Successfully!</h3>
+                    <div class="bg-gray-100 rounded-lg p-4 mb-6 break-all border border-gray-200"><p class="text-sm text-gray-500 mb-1">Blockchain Hash:</p><p class="text-indigo-600 font-mono text-sm" id="hashValue"></p></div>
+                    <a href="/institution-dashboard" class="btn-primary text-white px-8 py-3 font-semibold">Back to Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('three-canvas'), alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        const shapes = [];
+        const leftTorusGeometry = new THREE.TorusKnotGeometry(6, 1.5, 80, 12);
+        const leftTorusMaterial = new THREE.MeshBasicMaterial({ color: 0x10b981, wireframe: true, transparent: true, opacity: 0.4 });
+        const leftTorus = new THREE.Mesh(leftTorusGeometry, leftTorusMaterial);
+        leftTorus.position.set(-40, 5, -15);
+        scene.add(leftTorus);
+        shapes.push(leftTorus);
+        const rightIcosaGeometry = new THREE.IcosahedronGeometry(5);
+        const rightIcosaMaterial = new THREE.MeshBasicMaterial({ color: 0x0891b2, wireframe: true, transparent: true, opacity: 0.4 });
+        const rightIcosa = new THREE.Mesh(rightIcosaGeometry, rightIcosaMaterial);
+        rightIcosa.position.set(40, -5, -18);
+        scene.add(rightIcosa);
+        shapes.push(rightIcosa);
+        camera.position.z = 20;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            shapes.forEach((shape, index) => {
+                shape.rotation.x += 0.003 + index * 0.001;
+                shape.rotation.y += 0.004 + index * 0.001;
+            });
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // File upload UI logic
+        const fileInput = document.getElementById('fileInput');
+        const fileUploadArea = document.getElementById('fileUploadArea');
+        const filePreview = document.getElementById('filePreview');
+        const uploadContent = document.getElementById('uploadContent');
+        const previewImage = document.getElementById('previewImage');
+        const fileName = document.getElementById('fileName');
+
+        fileUploadArea.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) handleFile(e.target.files[0]);
+        });
+
+        function handleFile(file) {
+            fileName.textContent = file.name;
+            uploadContent.classList.add('hidden');
+            filePreview.classList.remove('hidden');
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => { previewImage.src = e.target.result; };
+                reader.readAsDataURL(file);
+            } else {
+                 // For non-image files like PDF, don't show an image preview
+                 previewImage.src = ''; // Clear any previous image
+            }
+        }
+
+        function clearFile() {
+            fileInput.value = '';
+            uploadContent.classList.remove('hidden');
+            filePreview.classList.add('hidden');
+        }
+
+        // Form submission with AJAX and progress
+        document.getElementById('certificateForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            const progressContainer = document.getElementById('uploadProgress');
+            const successMessage = document.getElementById('successMessage');
+            const formData = new FormData(this);
+            progressContainer.classList.remove('hidden');
+            submitBtn.innerHTML = '<div class="animate-spin h-5 w-5 mr-2 border-2 border-white border-t-transparent rounded-full"></div>Uploading...';
+            submitBtn.disabled = true;
+
+            // This is a dummy progress simulation. Replace with actual progress tracking if possible.
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 10;
+                if (progress > 90) {
+                    clearInterval(interval);
+                }
+                document.getElementById('progressFill').style.width = progress + '%';
+                document.getElementById('progressPercent').textContent = progress + '%';
+            }, 100);
+
+            fetch('/upload', { method: 'POST', body: formData })
+                .then(response => response.json())
+                .then(data => {
+                    clearInterval(interval);
+                    document.getElementById('progressFill').style.width = '100%';
+                    document.getElementById('progressPercent').textContent = '100%';
+
+                    if (data.success) {
+                        setTimeout(() => {
+                            this.style.display = 'none';
+                            progressContainer.classList.add('hidden');
+                            document.getElementById('hashValue').textContent = data.hash;
+                            successMessage.classList.remove('hidden');
+                        }, 500);
+                    } else {
+                        alert('Upload failed: ' + data.message);
+                        submitBtn.innerHTML = 'Upload Certificate';
+                        submitBtn.disabled = false;
+                        progressContainer.classList.add('hidden');
+                    }
+                })
+                .catch(error => {
+                    clearInterval(interval);
+                    console.error('Error:', error);
+                    alert('An error occurred during upload.');
+                    submitBtn.innerHTML = 'Upload Certificate';
+                    submitBtn.disabled = false;
+                    progressContainer.classList.add('hidden');
+                });
+        });
+    </script>
+</body>
+</html>

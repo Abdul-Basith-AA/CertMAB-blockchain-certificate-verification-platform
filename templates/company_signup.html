@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Signup - CertChain</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-green: #22C55E;
+            --primary-green-dark: #16A34A;
+        }
+
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body {
+            background-color: #F9FAFB;
+            color: #1F2937;
+            overflow-x: hidden;
+        }
+        
+        .gradient-bg {
+             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        
+        .content-card {
+            background: #FFFFFF;
+            border-radius: 24px;
+            border: 1px solid #E5E7EB;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+            transition: all 0.3s ease-in-out;
+        }
+        
+        .navbar {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid #E5E7EB;
+        }
+        
+        .nav-link {
+            color: #4B5563;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 8px 16px;
+            border-radius: 8px;
+        }
+        
+        .nav-link:hover {
+            color: var(--primary-green);
+            background: rgba(34, 197, 94, 0.1);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-green-dark) 100%);
+            border-radius: 12px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(34, 197, 94, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #E5E7EB;
+            border: 1px solid #D1D5DB;
+            border-radius: 12px;
+            font-weight: 600;
+            color: #374151;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-secondary:hover {
+            background: #D1D5DB;
+            transform: translateY(-2px);
+        }
+        
+        .form-input {
+            background-color: #F3F4F6;
+            border: 1px solid #D1D5DB;
+            border-radius: 8px;
+            color: #1F2937;
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-green);
+            background: #FFFFFF;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+        }
+        
+        .form-input::placeholder {
+            color: #9CA3AF;
+        }
+        
+        .form-label {
+            color: #374151;
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .page-title {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #111827 0%, #16A34A 100%);
+            -webkit-background-clip: text;
+            -moz-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            line-height: 1.1;
+        }
+        
+        #three-canvas-left, #three-canvas-right {
+            position: fixed;
+            top: 0;
+            z-index: -1;
+            opacity: 0.2;
+        }
+        
+        #three-canvas-left {
+            left: -200px;
+        }
+        
+        #three-canvas-right {
+            right: -200px;
+        }
+        
+        .alert {
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+        
+        .alert-danger {
+            background: #FEE2E2;
+            border: 1px solid #FCA5A5;
+            color: #B91C1C;
+        }
+        
+        .alert-success {
+            background: #D1FAE5;
+            border: 1px solid #6EE7B7;
+            color: #065F46;
+        }
+        
+        .file-upload-label {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: #F3F4F6;
+            border: 1px solid #D1D5DB;
+            border-radius: 8px;
+            color: #4B5563;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .file-upload-label:hover {
+            background: #E5E7EB;
+            border-color: #9CA3AF;
+        }
+        
+        .hero-subtitle {
+            color: #4B5563;
+            font-size: 1.125rem;
+            line-height: 1.75rem;
+        }
+    </style>
+</head>
+<body class="gradient-bg">
+    <canvas id="three-canvas-left"></canvas>
+    <canvas id="three-canvas-right"></canvas>
+
+    <nav class="navbar fixed top-0 w-full z-40">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex justify-between items-center">
+                <a href="/" class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <span class="text-2xl font-bold text-gray-800">CertChain</span>
+                </a>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="nav-link">Back to Home</a>
+                    <a href="/company-login" class="btn-secondary px-6 py-3">Login</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="min-h-screen pt-32 pb-16">
+        <div class="max-w-4xl mx-auto px-6">
+            <header class="text-center mb-12">
+                <h1 class="page-title mb-4">Company Registration</h1>
+                <p class="hero-subtitle max-w-2xl mx-auto">
+                    Join our blockchain-powered certificate verification platform. Complete the form and our team will review your application.
+                </p>
+            </header>
+
+            <div class="content-card p-8 md:p-10">
+                <!-- Alert Messages -->
+                {% if error %}
+                    <div class="alert alert-danger">
+                        <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                        <span>{{ error }}</span>
+                    </div>
+                {% elif message %}
+                    <div class="alert alert-success">
+                        <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                        <span>{{ message }}</span>
+                    </div>
+                {% endif %}
+
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="form-label">Legal Company Name *</label>
+                            <input type="text" name="company_name" class="form-input w-full" placeholder="Enter your legal company name" required>
+                        </div>
+                        <div>
+                            <label class="form-label">Company Type *</label>
+                            <select name="company_type" class="form-input w-full" required>
+                                <option value="">Select Company Type</option>
+                                <option value="Private">Private Limited</option>
+                                <option value="Public">Public Limited</option>
+                                <option value="LLP">LLP</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Business Registration Number *</label>
+                            <input type="text" name="registration_number" class="form-input w-full" placeholder="CIN/UEN/CRN" required>
+                        </div>
+                        <div>
+                            <label class="form-label">Tax Identification Number *</label>
+                            <input type="text" name="tax_id" class="form-input w-full" placeholder="GST/PAN/TIN" required>
+                        </div>
+                        <div>
+                            <label class="form-label">Industry/Sector *</label>
+                            <input type="text" name="industry" class="form-input w-full" placeholder="e.g., Technology, Healthcare" required>
+                        </div>
+                        <div>
+                            <label class="form-label">Official Website URL *</label>
+                            <input type="url" name="website_url" class="form-input w-full" placeholder="https://yourcompany.com" required>
+                        </div>
+                        <div>
+                            <label class="form-label">Corporate Email Address *</label>
+                            <input type="email" name="email" class="form-input w-full" placeholder="contact@yourcompany.com" required>
+                        </div>
+                         <div>
+                            <label for="password-input" class="form-label">Password *</label>
+                            <div class="relative">
+                                <input id="password-input" type="password" name="password" class="form-input w-full pr-10" placeholder="Create a secure password" required>
+                                <button type="button" id="toggle-password" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-800">
+                                    <svg id="eye-icon" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                    <svg id="eye-slash-icon" class="h-5 w-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 .91-2.92 3.19-5.245 5.824-6.152M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 2l20 20"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="form-label">Corporate Phone Number *</label>
+                            <input type="tel" name="phone" class="form-input w-full" placeholder="+1 (555) 123-4567" required>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <label class="form-label">Head Office Address *</label>
+                        <textarea name="address" class="form-input w-full" rows="3" placeholder="Enter your complete business address" required></textarea>
+                    </div>
+                    <div class="mt-8">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                            <svg class="w-6 h-6 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Required Documents
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <label class="form-label">Certificate of Incorporation *</label>
+                                <div class="relative file-upload">
+                                    <input type="file" name="certificate_incorporation" class="absolute opacity-0 w-full h-full cursor-pointer" accept=".pdf,.jpg,.jpeg,.png" required>
+                                    <label class="file-upload-label">
+                                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                                        <span>Upload File</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="form-label">Business License *</label>
+                                 <div class="relative file-upload">
+                                    <input type="file" name="business_license" class="absolute opacity-0 w-full h-full cursor-pointer" accept=".pdf,.jpg,.jpeg,.png" required>
+                                    <label class="file-upload-label">
+                                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                                        <span>Upload File</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="form-label">GST/Tax Certificate *</label>
+                                <div class="relative file-upload">
+                                    <input type="file" name="gst_certificate" class="absolute opacity-0 w-full h-full cursor-pointer" accept=".pdf,.jpg,.jpeg,.png" required>
+                                    <label class="file-upload-label">
+                                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                                        <span>Upload File</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-10">
+                        <button type="submit" class="btn-primary px-8 py-4 text-lg font-semibold w-full flex items-center justify-center">
+                            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                            Submit Registration Request
+                        </button>
+                    </div>
+                </form>
+                <div class="mt-8 text-center">
+                    <p class="text-gray-600">
+                        Already have an account? 
+                        <a href="/company-login" class="text-green-600 hover:text-green-500 font-medium">Login here</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.querySelectorAll('input[type="file"]').forEach(input => {
+            input.addEventListener('change', function(e) {
+                const label = this.nextElementSibling.querySelector('span');
+                const fileName = e.target.files[0]?.name;
+                label.textContent = fileName || 'Upload File';
+            });
+        });
+        
+        const sceneLeft = new THREE.Scene();
+        const cameraLeft = new THREE.PerspectiveCamera(75, 400 / window.innerHeight, 0.1, 1000);
+        const rendererLeft = new THREE.WebGLRenderer({ canvas: document.getElementById('three-canvas-left'), alpha: true, antialias: true });
+        rendererLeft.setSize(400, window.innerHeight);
+        const torusGeometry = new THREE.TorusKnotGeometry(4, 1.5, 64, 8);
+        const torusMaterial = new THREE.MeshBasicMaterial({ color: 0x22C55E, wireframe: true, transparent: true, opacity: 0.6 });
+        const torusKnot = new THREE.Mesh(torusGeometry, torusMaterial);
+        sceneLeft.add(torusKnot);
+        cameraLeft.position.z = 15;
+
+        const sceneRight = new THREE.Scene();
+        const cameraRight = new THREE.PerspectiveCamera(75, 400 / window.innerHeight, 0.1, 1000);
+        const rendererRight = new THREE.WebGLRenderer({ canvas: document.getElementById('three-canvas-right'), alpha: true, antialias: true });
+        rendererRight.setSize(400, window.innerHeight);
+        const dodecaGeometry = new THREE.DodecahedronGeometry(4);
+        const dodecaMaterial = new THREE.MeshBasicMaterial({ color: 0x16A34A, wireframe: true, transparent: true, opacity: 0.5 });
+        const dodecahedron = new THREE.Mesh(dodecaGeometry, dodecaMaterial);
+        sceneRight.add(dodecahedron);
+        cameraRight.position.z = 12;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            torusKnot.rotation.x += 0.01;
+            torusKnot.rotation.y += 0.01;
+            dodecahedron.rotation.x += 0.008;
+            dodecahedron.rotation.y += 0.012;
+            rendererLeft.render(sceneLeft, cameraLeft);
+            rendererRight.render(sceneRight, cameraRight);
+        }
+        animate();
+        
+        // Password visibility toggle
+        const togglePassword = document.getElementById('toggle-password');
+        const passwordInput = document.getElementById('password-input');
+        const eyeIcon = document.getElementById('eye-icon');
+        const eyeSlashIcon = document.getElementById('eye-slash-icon');
+
+        if (togglePassword && passwordInput) {
+            togglePassword.addEventListener('click', function () {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                
+                eyeIcon.classList.toggle('hidden');
+                eyeSlashIcon.classList.toggle('hidden');
+            });
+        }
+    </script>
+</body>
+</html>

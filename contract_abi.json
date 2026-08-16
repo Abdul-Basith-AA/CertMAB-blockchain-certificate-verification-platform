@@ -1,0 +1,336 @@
+[
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "bytes32",
+                "name": "certificateHash",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "studentEmail",
+                "type": "string"
+            }
+        ],
+        "name": "CertificateStored",
+        "type": "event"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "allCertificateHashes",
+        "outputs": [
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            }
+        ],
+        "name": "certificates",
+        "outputs": [
+            {
+                "internalType": "string",
+                "name": "studentName",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "studentEmail",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "institutionName",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "courseName",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "certificateId",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "certType",
+                "type": "string"
+            },
+            {
+                "internalType": "uint256",
+                "name": "timestamp",
+                "type": "uint256"
+            },
+            {
+                "internalType": "string",
+                "name": "studentId",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "stream",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "batch",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "department",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "cgpa",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "issueDate",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "issuingBody",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "startDate",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "endDate",
+                "type": "string"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getAllCertificateHashes",
+        "outputs": [
+            {
+                "internalType": "bytes32[]",
+                "name": "",
+                "type": "bytes32[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "_hash",
+                "type": "bytes32"
+            }
+        ],
+        "name": "getCertificateDetails",
+        "outputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "string",
+                        "name": "studentName",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "studentEmail",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "institutionName",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "courseName",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "certificateId",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "certType",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "timestamp",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "studentId",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "stream",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "batch",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "department",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "cgpa",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "issueDate",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "issuingBody",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "startDate",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "endDate",
+                        "type": "string"
+                    }
+                ],
+                "internalType": "struct CertificateStore.Certificate",
+                "name": "",
+                "type": "tuple"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "_hash",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "string",
+                "name": "_studentName",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "_studentEmail",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "_institutionName",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "_courseName",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "_certificateId",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "_certType",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "_studentId",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "_stream",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "_batch",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "_department",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "_cgpa",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "_issueDate",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "_issuingBody",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "_startDate",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "_endDate",
+                "type": "string"
+            }
+        ],
+        "name": "storeCertificate",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    }
+]

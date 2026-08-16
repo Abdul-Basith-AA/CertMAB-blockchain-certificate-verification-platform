@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CertChain Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { 'sans': ['Inter', 'system-ui', 'sans-serif'] },
+                    colors: {
+                        primary: { 50: '#f0f9ff', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a' },
+                        secondary: { 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9', 800: '#5b21b6', 900: '#4c1d95' }
+                    },
+                    animation: { 'float': 'float 6s ease-in-out infinite', 'glow': 'glow 2s ease-in-out infinite alternate', 'fadeIn': 'fadeIn 0.8s ease-out forwards', 'slideIn': 'slideIn 0.6s ease-out forwards', 'slideOut': 'slideOut 0.4s ease-in forwards', 'pulse-slow': 'pulse 3s ease-in-out infinite' },
+                    keyframes: {
+                        float: { '0%, 100%': { transform: 'translateY(0px)' }, '50%': { transform: 'translateY(-10px)' } },
+                        glow: { '0%': { boxShadow: '0 0 20px rgba(139, 92, 246, 0.3)' }, '100%': { boxShadow: '0 0 40px rgba(139, 92, 246, 0.6)' } },
+                        fadeIn: { '0%': { opacity: '0', transform: 'translateY(30px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+                        slideIn: { '0%': { opacity: '0', transform: 'translateX(-100%)' }, '100%': { opacity: '1', transform: 'translateX(0)' } },
+                        slideOut: { '0%': { opacity: '1', transform: 'translateX(0)' }, '100%': { opacity: '0', transform: 'translateX(-100%)' } }
+                    },
+                    backdropBlur: { 'xs': '2px' }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-card { background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(15px); border: 1px solid rgba(0, 0, 0, 0.08); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); }
+        .glass-card-hover { transition: all 0.3s ease; }
+        .glass-card-hover:hover { background: rgba(255, 255, 255, 0.9); border: 1px solid rgba(0, 0, 0, 0.15); transform: translateY(-2px); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12); }
+        .gradient-bg { background: linear-gradient(135deg, #f5f7fa 0%, #e9eef3 100%); }
+        .btn-primary { background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%); transition: all 0.3s ease; }
+        .btn-primary:hover { background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%); transform: translateY(-2px); box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4); }
+        .btn-danger { background-color: #ef4444; color: white; }
+        .btn-danger:hover { background-color: #dc2626; }
+        .certificate-row:hover, .student-row:hover { background: rgba(139, 92, 246, 0.05); }
+        .search-input { background: #FFFFFF; border: 1px solid #D1D5DB; }
+        .search-input:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
+        #three-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.3; pointer-events: none; }
+        .sidebar { position: fixed; top: 0; left: 0; width: 320px; height: 100vh; background: rgba(249, 250, 251, 0.85); backdrop-filter: blur(20px); border-right: 1px solid rgba(0, 0, 0, 0.1); z-index: 1000; transform: translateX(-100%); transition: transform 0.4s ease; }
+        .sidebar.active { transform: translateX(0); }
+        .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 999; opacity: 0; visibility: hidden; transition: all 0.3s ease; }
+        .sidebar-overlay.active { opacity: 1; visibility: visible; }
+        .nav-item { position: relative; overflow: hidden; transition: all 0.3s ease; }
+        .nav-item.active { background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%); box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3); }
+        .nav-item:not(.active):hover { background: rgba(139, 92, 246, 0.1); transform: translateX(5px); }
+        .section-content { display: none; }
+        .section-content.active { display: block; }
+        .loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f5f7fa; display: flex; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.5s ease; }
+        .loader.hidden { opacity: 0; pointer-events: none; }
+        .loading-animation { width: 80px; height: 80px; border: 3px solid rgba(139, 92, 246, 0.3); border-top: 3px solid #8b5cf6; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px); z-index: 1050; display: none; align-items: center; justify-content: center; }
+        .modal-container { max-width: 600px; width: 90%; animation: fadeIn 0.3s ease-out; }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen text-gray-800 overflow-x-hidden">
+    <div class="loader" id="loader"><div class="text-center"><div class="loading-animation mx-auto mb-4"></div><div class="text-xl font-semibold text-gray-700">Loading Dashboard...</div></div></div>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    <div class="sidebar" id="sidebar">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center space-x-3"><div class="w-12 h-12 bg-gradient-to-r from-secondary-500 to-primary-500 rounded-xl flex items-center justify-center animate-glow"><svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3L1 9L5 11.18V17.18L12 21L19 17.18V11.18L21 10.09V17H23V9L12 3ZM18.82 9L12 12.72L5.18 9L12 5.28L18.82 9ZM17 16L12 18.72L7 16V12.27L12 15L17 12.27V16Z"/></svg></div><div><h2 class="text-xl font-bold text-gray-900">CertChain</h2><p class="text-xs text-gray-500">Dashboard</p></div></div>
+                <button onclick="toggleSidebar()" class="p-2 hover:bg-black/5 rounded-lg transition-colors"><svg class="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 24 24"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg></button>
+            </div>
+            <div class="glass-card rounded-xl p-4 mb-6"><div class="flex items-center space-x-3"><div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">{{ institution.institution_name[0]|upper }}</div><div><p class="text-gray-900 font-semibold text-sm">{{ institution.institution_name }}</p></div></div></div>
+            <nav class="space-y-2">
+                <button class="nav-item active w-full text-left px-4 py-4 rounded-xl font-medium text-white transition-all flex items-center space-x-3" onclick="switchTab('user-dashboard')"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M13,3V9H21V3M13,21H21V11H13M3,21H11V15H3M3,13H11V3H3V13Z"/></svg><span>Dashboard</span></button>
+                <button class="nav-item w-full text-left px-4 py-4 rounded-xl font-medium text-gray-700 transition-all flex items-center space-x-3" onclick="switchTab('profile')"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/></svg><span>Profile</span></button>
+                <button class="nav-item w-full text-left px-4 py-4 rounded-xl font-medium text-gray-700 transition-all flex items-center space-x-3" onclick="switchTab('upload-certificate')"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z M12,11L16,15H13.5V19H10.5V15H8L12,11Z"/></svg><span>Issue Certificate</span></button>
+                <button class="nav-item w-full text-left px-4 py-4 rounded-xl font-medium text-gray-700 transition-all flex items-center space-x-3" onclick="switchTab('certificate-registry')"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M3,3H21V5H3V3M4,6H20V10H21A1,1 0 0,1 22,11V16A1,1 0 0,1 21,17H20V20A1,1 0 0,1 19,21H5A1,1 0 0,1 4,20V17H3A1,1 0 0,1 2,16V11A1,1 0 0,1 3,10H4V6M6,8V19H18V8H6M8,10H16V12H8V10M8,13H16V15H8V13Z"/></svg><span>Certificate Registry</span></button>
+                <button class="nav-item w-full text-left px-4 py-4 rounded-xl font-medium text-gray-700 transition-all flex items-center space-x-3" onclick="switchTab('feedback')"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M9,22A1,1 0 0,1 8,21V18H4A2,2 0 0,1 2,16V4C2,2.89 2.9,2 4,2H20A2,2 0 0,1 22,4V16A2,2 0 0,1 20,18H13.9L10.2,21.71C10,21.9 9.75,22 9.5,22V22H9Z"/></svg><span>Feedback</span></button>
+            </nav>
+            <div class="absolute bottom-6 left-6 right-6"><a href="{{ url_for('logout') }}" class="w-full flex items-center space-x-3 px-4 py-3 bg-red-500/10 hover:bg-red-500/20 rounded-xl transition-all text-red-600 border border-red-500/20"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.59L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg><span>Logout</span></a></div>
+        </div>
+    </div>
+    <canvas id="three-canvas"></canvas>
+    <div class="relative z-10 container mx-auto px-4 py-6 max-w-7xl">
+        <header class="glass-card rounded-2xl p-8 mb-8 animate-fadeIn"><div class="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0"><div class="flex items-center space-x-6"><div class="relative"><div class="w-16 h-16 bg-gradient-to-r from-secondary-500 to-primary-500 rounded-2xl flex items-center justify-center animate-glow"><svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3L1 9L5 11.18V17.18L12 21L19 17.18V11.18L21 10.09V17H23V9L12 3ZM18.82 9L12 12.72L5.18 9L12 5.28L18.82 9ZM17 16L12 18.72L7 16V12.27L12 15L17 12.27V16Z"/></svg></div><div class="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full animate-pulse"></div></div><div><h1 class="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-800 via-secondary-600 to-primary-600 bg-clip-text text-transparent">Institution Dashboard</h1><p class="text-lg text-gray-600 font-medium">Blockchain Certificate Management</p></div></div><div class="flex items-center space-x-4"><button onclick="toggleSidebar()" class="w-12 h-12 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg cursor-pointer">{{ institution.institution_name[0]|upper }}</button></div></div></header>
+        <div id="user-dashboard" class="section-content active">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div onclick="switchTab('certificate-registry')" class="glass-card glass-card-hover rounded-2xl p-6 animate-fadeIn cursor-pointer" style="animation-delay: 0.1s">
+                    <div class="flex items-center justify-between"><div><p class="text-gray-500 text-sm font-medium mb-1">Total Certificates Issued</p><p class="text-4xl font-bold bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">{{ stats.total_certificates }}</p></div><div class="w-16 h-16 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-2xl flex items-center justify-center"><svg class="w-8 h-8 text-blue-500" fill="currentColor" viewBox="0 0 24 24"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg></div></div>
+                </div>
+                <div onclick="switchTab('certificate-registry')" class="glass-card glass-card-hover rounded-2xl p-6 animate-fadeIn cursor-pointer" style="animation-delay: 0.2s">
+                    <div class="flex items-center justify-between"><div><p class="text-gray-500 text-sm font-medium mb-1">Total Verifications on Your Certificates</p><p class="text-4xl font-bold bg-gradient-to-r from-green-500 to-emerald-500 bg-clip-text text-transparent">{{ stats.total_verifications }}</p></div><div class="w-16 h-16 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-2xl flex items-center justify-center"><svg class="w-8 h-8 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div></div>
+                </div>
+            </div>
+            <div class="glass-card rounded-2xl p-8 mb-8 animate-fadeIn" style="animation-delay: 0.5s">
+                <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center"><svg class="w-6 h-6 text-purple-500 mr-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/></svg>Registered Students</h3>
+                <div class="overflow-x-auto max-h-96"><table class="w-full"><thead><tr class="border-b border-gray-200"><th class="text-left p-4 text-gray-500 font-semibold text-sm uppercase tracking-wider">Student Name</th><th class="text-left p-4 text-gray-500 font-semibold text-sm uppercase tracking-wider">Email</th><th class="text-left p-4 text-gray-500 font-semibold text-sm uppercase tracking-wider">Student ID</th><th class="text-left p-4 text-gray-500 font-semibold text-sm uppercase tracking-wider">Actions</th></tr></thead><tbody>
+                    {% for student in students %}
+                    <tr class="student-row border-b border-gray-100" id="student-row-{{ student.uid }}"><td class="p-4"><p class="text-gray-800 font-semibold">{{ student.name }}</p></td><td class="p-4"><p class="text-gray-600">{{ student.email }}</p></td><td class="p-4"><p class="text-gray-600">{{ student.student_id }}</p></td><td class="p-4 flex items-center space-x-2"><button onclick='showStudentDetailsModal({{ student|tojson }})' class="btn-primary px-3 py-1 rounded-md text-sm font-semibold transition-transform hover:scale-105 text-white">View</button><button onclick="removeStudent('{{ student.uid }}', '{{ student.name }}')" class="btn-danger px-3 py-1 rounded-md text-sm font-semibold transition-transform hover:scale-105">Remove</button></td></tr>
+                    {% else %} <tr><td colspan="4" class="text-center p-8 text-gray-500">No students registered yet.</td></tr> {% endfor %}
+                </tbody></table></div>
+            </div>
+        </div>
+
+        <div id="profile" class="section-content">
+            <div class="glass-card rounded-2xl p-8 animate-fadeIn">
+                <div class="text-center mb-8">
+                    <div class="w-24 h-24 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 text-white font-bold text-2xl animate-float">
+                        {{ institution.institution_name[0]|upper }}
+                    </div>
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">Institution Profile</h2>
+                </div>
+                <div class="max-w-4xl mx-auto">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="glass-card rounded-xl p-6">
+                            <h3 class="text-xl font-semibold text-gray-900 mb-6 flex items-center"><svg class="w-5 h-5 text-purple-500 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/></svg> Information</h3>
+                            <div class="space-y-4">
+                                <div><label class="block text-gray-700 font-medium mb-2">Institution Name</label><input type="text" value="{{ institution.institution_name }}" class="w-full px-4 py-3 search-input rounded-xl text-gray-800" readonly /></div>
+                                <div><label class="block text-gray-700 font-medium mb-2">Email</label><input type="email" value="{{ institution.email }}" class="w-full px-4 py-3 search-input rounded-xl text-gray-800" readonly /></div>
+                                <div><label class="block text-gray-700 font-medium mb-2">Institution Type</label><input type="text" value="{{ institution.institution_type }}" class="w-full px-4 py-3 search-input rounded-xl text-gray-800" readonly /></div>
+                                <div><label class="block text-gray-700 font-medium mb-2">Registration Number</label><input type="text" value="{{ institution.registration_number }}" class="w-full px-4 py-3 search-input rounded-xl text-gray-800" readonly /></div>
+                                <div><label class="block text-gray-700 font-medium mb-2">Contact Number</label><input type="text" value="{{ institution.contact_number }}" class="w-full px-4 py-3 search-input rounded-xl text-gray-800" readonly /></div>
+                                <div><label class="block text-gray-700 font-medium mb-2">Website</label><input type="text" value="{{ institution.website_url }}" class="w-full px-4 py-3 search-input rounded-xl text-gray-800" readonly /></div>
+                            </div>
+                        </div>
+                        <div class="glass-card rounded-xl p-6">
+                            <h3 class="text-xl font-semibold text-gray-900 mb-6 flex items-center"><svg class="w-5 h-5 text-purple-500 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z"/></svg> Affiliation</h3>
+                            <div class="space-y-4">
+                                <div><label class="block text-gray-700 font-medium mb-2">Affiliated Board</label><input type="text" value="{{ institution.affiliated_board }}" class="w-full px-4 py-3 search-input rounded-xl text-gray-800" readonly /></div>
+                                <div><label class="block text-gray-700 font-medium mb-2">Accreditation Details</label><input type="text" value="{{ institution.accreditation_details }}" class="w-full px-4 py-3 search-input rounded-xl text-gray-800" readonly /></div>
+                                <div><label class="block text-gray-700 font-medium mb-2">Address</label><textarea rows="5" class="w-full px-4 py-3 search-input rounded-xl resize-none text-gray-800" readonly>{{ institution.address }}</textarea></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="upload-certificate" class="section-content space-y-8">
+            <div class="glass-card rounded-2xl p-8 animate-fadeIn">
+                <div class="text-center mb-8">
+                    <div class="w-20 h-20 bg-gradient-to-r from-secondary-500 to-primary-500 rounded-3xl flex items-center justify-center mx-auto mb-4 animate-float"><svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z M12,11L16,15H13.5V19H10.5V15H8L12,11Z"/></svg></div>
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">Issue a New Certificate</h2>
+                    <p class="text-gray-500 max-w-md mx-auto">Issue a single Degree or Additional certificate using a web form.</p>
+                </div>
+                <div class="flex justify-center gap-8"><a href="{{ url_for('form', cert_type='degree') }}" class="btn-primary text-white px-10 py-4 rounded-2xl text-lg font-semibold shadow-md hover:scale-105 transition-all">Degree Certificate</a><a href="{{ url_for('form', cert_type='additional') }}" class="btn-primary text-white px-10 py-4 rounded-2xl text-lg font-semibold shadow-md hover:scale-105 transition-all">Additional Certificate</a></div>
+            </div>
+        
+            <div class="glass-card rounded-2xl p-8 animate-fadeIn">
+                <div class="text-center mb-8">
+                    <div class="w-20 h-20 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-3xl flex items-center justify-center mx-auto mb-4 animate-float"><svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M16.5,6V3.5C16.5,2.12 15.38,1 14,1H10C8.62,1 7.5,2.12 7.5,3.5V6H4V20H20V6H16.5M10,3H14V6H10V3M18,18H6V8H18V18M15,10H9V12H15V10M15,13H9V15H15V13Z" /></svg></div>
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">Bulk Issue Certificates</h2>
+                    <p class="text-gray-500 max-w-lg mx-auto">Upload an Excel (.xlsx) file to issue multiple certificates at once.</p>
+                </div>
+                <form id="bulk-upload-form" class="max-w-3xl mx-auto space-y-8">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+                        <div class="glass-card p-4 rounded-xl text-center"><div class="bg-primary-600 w-10 h-10 flex items-center justify-center rounded-full mx-auto mb-3 font-bold text-lg text-white">1</div><h4 class="font-semibold mb-2 text-gray-800">Download Template</h4><p class="text-xs text-gray-500">Download the required .xlsx template to fill student data.</p></div>
+                        <div class="glass-card p-4 rounded-xl text-center"><div class="bg-primary-600 w-10 h-10 flex items-center justify-center rounded-full mx-auto mb-3 font-bold text-lg text-white">2</div><h4 class="font-semibold mb-2 text-gray-800">Select Type</h4><p class="text-xs text-gray-500">Choose the certificate type that matches your template.</p></div>
+                        <div class="glass-card p-4 rounded-xl text-center"><div class="bg-primary-600 w-10 h-10 flex items-center justify-center rounded-full mx-auto mb-3 font-bold text-lg text-white">3</div><h4 class="font-semibold mb-2 text-gray-800">Upload File</h4><p class="text-xs text-gray-500">Upload the completed Excel file to start the process.</p></div>
+                    </div>
+                    <div class="glass-card p-6 rounded-xl">
+                        <label class="block text-gray-700 font-medium mb-3 text-center">Templates</label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <a href="/download/degree_template.xlsx" class="block p-4 bg-gray-500/10 rounded-lg hover:bg-gray-500/20 text-center transition"><p class="font-semibold text-gray-800">Degree Certificate</p><span class="text-sm text-blue-600">Download (.xlsx)</span></a>
+                            <a href="/download/additional_template.xlsx" class="block p-4 bg-gray-500/10 rounded-lg hover:bg-gray-500/20 text-center transition"><p class="font-semibold text-gray-800">Additional Certificate</p><span class="text-sm text-purple-600">Download (.xlsx)</span></a>
+                        </div>
+                    </div>
+                    <div class="glass-card p-6 rounded-xl"><label class="block text-gray-700 font-medium mb-3 text-center">Certificate Type & File</label><div class="flex flex-col md:flex-row gap-4 items-center justify-center"><div id="bulk-cert-type" class="flex gap-4">
+                        <label class="flex items-center space-x-2 glass-card-hover p-3 rounded-lg cursor-pointer"><input type="radio" name="cert_type" value="degree" class="form-radio text-primary-500" required><span>Degree</span></label>
+                        <label class="flex items-center space-x-2 glass-card-hover p-3 rounded-lg cursor-pointer"><input type="radio" name="cert_type" value="additional" class="form-radio text-secondary-500" required><span>Additional</span></label>
+                    </div><input type="file" id="bulk-file-input" name="bulk-file" accept=".xlsx" required class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-500/10 file:text-primary-700 hover:file:bg-primary-500/20"/></div></div>
+                    <div class="text-center pt-4"><button type="submit" class="btn-primary text-white inline-flex items-center space-x-3 px-10 py-4 rounded-2xl font-semibold text-lg"><span>Upload & Process File</span></button></div>
+                </form>
+                <div id="bulk-upload-status" class="mt-8 text-center max-w-2xl mx-auto"></div>
+            </div>
+        </div>
+        
+        <div id="certificate-registry" class="section-content"><div class="glass-card rounded-2xl p-8 animate-fadeIn"><div class="overflow-x-auto"><table class="w-full"><thead><tr class="border-b border-gray-200"><th class="text-left p-4 text-gray-500 font-semibold text-sm uppercase tracking-wider">Student</th><th class="text-left p-4 text-gray-500 font-semibold text-sm uppercase tracking-wider">Course Details</th><th class="text-left p-4 text-gray-500 font-semibold text-sm uppercase tracking-wider">Verified Count</th><th class="text-left p-4 text-gray-500 font-semibold text-sm uppercase tracking-wider">Verified By</th><th class="text-left p-4 text-gray-500 font-semibold text-sm uppercase tracking-wider">Actions</th></tr></thead><tbody id="certificateTableBody">
+            {% for cert in certificates %}
+            <tr class="certificate-row border-b border-gray-100">
+                <td class="p-4"><div class="flex items-center space-x-4"><div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center text-white font-bold text-lg">{{ cert.name[0]|upper }}</div><div><p class="text-gray-900 font-semibold text-lg">{{ cert.name }}</p><p class="text-gray-500 text-sm">ID: {{ cert.cid }}</p></div></div></td>
+                <td class="p-4"><div><p class="text-gray-800 font-medium text-lg">{{ cert.course }} ({{ cert.cert_type|capitalize }})</p><p class="text-gray-500 text-sm">{{ cert.display_date }}</p></div></td>
+                <td class="p-4"><p class="text-gray-900 text-lg font-semibold">{{ cert.verification_count }}</p></td>
+                <td class="p-4" title="{{ cert.verifier_tooltip_text }}">
+                    {% if cert.verifiers_formatted %}<div class="text-xs space-y-2">
+                        {% for verifier in cert.verifiers_formatted[:2] %}<div><p class="font-semibold text-gray-800 truncate">{{ verifier.company_name }}</p><p class="text-gray-500">{{ verifier.timestamp }}</p></div>{% endfor %}
+                        {% if cert.verifiers_formatted|length > 2 %}<p class="text-gray-500 pt-1">+{{ cert.verifiers_formatted|length - 2 }} more...</p>{% endif %}
+                    </div>{% else %}<p class="text-gray-500 text-sm">N/A</p>{% endif %}
+                </td>
+                <td class="p-4"><div class="flex items-center space-x-2"><a href="{{ cert.image_url }}" target="_blank" class="p-2 glass-card hover:bg-black/5 rounded-lg text-gray-600" title="View Certificate Image">Image</a><button class="p-2 glass-card hover:bg-black/5 rounded-lg text-gray-600" title="View Certificate Data" onclick='viewCertificateData({{ cert|tojson }})'>Data</button></div></td>
+            </tr>
+            {% else %}<tr><td colspan="5" class="text-center p-8 text-gray-500">You have not issued any certificates yet.</td></tr>{% endfor %}
+        </tbody></table></div></div></div>
+
+        <div id="feedback" class="section-content"><div class="glass-card rounded-2xl p-8 animate-fadeIn"><div class="text-center mb-8"><div class="w-20 h-20 bg-gradient-to-r from-secondary-500 to-primary-500 rounded-3xl flex items-center justify-center mx-auto mb-4 animate-float"><svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M9,22A1,1 0 0,1 8,21V18H4A2,2 0 0,1 2,16V4C2,2.89 2.9,2 4,2H20A2,2 0 0,1 22,4V16A2,2 0 0,1 20,18H13.9L10.2,21.71C10,21.9 9.75,22 9.5,22V22H9Z"/></svg></div><h2 class="text-3xl font-bold text-gray-900 mb-4">Feedback & Support</h2></div><div class="max-w-2xl mx-auto"><form id="inst-feedback-form" onsubmit="event.preventDefault(); submitFeedback();"><div class="space-y-6"><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div><label class="block text-gray-700 font-medium mb-2">Institution Name</label><input type="text" value="{{ institution.institution_name }}" class="w-full px-4 py-3 search-input rounded-xl text-gray-800" readonly /></div><div><label class="block text-gray-700 font-medium mb-2">Email</label><input type="email" value="{{ institution.email }}" class="w-full px-4 py-3 search-input rounded-xl text-gray-800" readonly /></div></div><div><label class="block text-gray-700 font-medium mb-2">Category</label><select id="feedback-category" class="w-full px-4 py-3 search-input rounded-xl text-gray-800"><option>Select category</option><option>Bug Report</option><option>Feature Request</option><option>General Feedback</option></select></div><div><label class="block text-gray-700 font-medium mb-2">Subject</label><input id="feedback-subject" type="text" class="w-full px-4 py-3 search-input rounded-xl text-gray-800" /></div><div><label class="block text-gray-700 font-medium mb-2">Message</label><textarea id="feedback-message" rows="6" class="w-full px-4 py-3 search-input rounded-xl resize-none text-gray-800"></textarea></div><div class="text-center"><button type="submit" class="btn-primary text-white inline-flex items-center space-x-3 px-10 py-4 rounded-2xl font-semibold text-lg"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M2,21L23,12L2,3V10L17,12L2,14V21Z"/></svg><span>Submit</span></button></div></div></form></div></div></div>
+    </div>
+
+    <div id="notification" class="fixed top-4 right-4 z-50 transform translate-x-full transition-transform duration-300"><div class="glass-card rounded-xl p-4 min-w-80 shadow-lg"><div class="flex items-center space-x-3"><div id="notificationIcon" class="w-8 h-8 rounded-full flex items-center justify-center"></div><div><p id="notificationTitle" class="text-gray-800 font-semibold"></p><p id="notificationMessage" class="text-gray-500 text-sm"></p></div><button onclick="hideNotification()" class="text-gray-400 hover:text-gray-800"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg></button></div></div></div>
+    <div id="studentDetailsModal" class="modal-overlay" onclick="closeStudentModal()"><div class="modal-container glass-card rounded-2xl" onclick="event.stopPropagation()"><div class="p-6 border-b border-gray-200 flex justify-between items-center"><h3 class="text-xl font-bold text-gray-900">Student Details</h3><button onclick="closeStudentModal()" class="text-gray-400 hover:text-gray-800 p-2 rounded-full -mr-2 -mt-2">&times;</button></div><div id="student-modal-body" class="p-6 text-gray-600 grid grid-cols-1 md:grid-cols-2 gap-4"></div></div></div>
+    <div id="certificateModal" class="modal-overlay" onclick="closeModal()"><div class="modal-container glass-card rounded-2xl" onclick="event.stopPropagation()"><div class="p-6 border-b border-gray-200 flex justify-between items-center"><h3 class="text-xl font-bold text-gray-900">Certificate Details</h3><button onclick="closeModal()" class="text-gray-400 hover:text-gray-800 p-2 rounded-full -mr-2 -mt-2">&times;</button></div><div id="modal-content-body" class="p-6 modal-content text-gray-600 max-h-[60vh] overflow-y-auto"></div><div class="p-4 bg-gray-100 rounded-b-2xl text-right"><button onclick="closeModal()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold text-gray-800">Close</button></div></div></div>
+
+    <script>
+        let scene, camera, renderer, particles;
+        function initThreeJS() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('three-canvas'), alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.position.z = 5;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(200 * 3);
+            for (let i = 0; i < 200 * 3; i+=3) { positions[i] = (Math.random() - 0.5) * 20; positions[i+1] = (Math.random() - 0.5) * 20; positions[i+2] = (Math.random() - 0.5) * 10; }
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            particles = new THREE.Points(geometry, new THREE.PointsMaterial({ color: 0x8b5cf6, size: 0.05, transparent: true, opacity: 0.6 }));
+            scene.add(particles);
+            animate();
+        }
+        function animate() { requestAnimationFrame(animate); if(particles) { particles.rotation.x += 0.0005; particles.rotation.y += 0.001; } renderer.render(scene, camera); }
+        window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+        window.addEventListener('load', () => { setTimeout(() => { document.getElementById('loader').classList.add('hidden'); }, 1000); initThreeJS(); });
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); document.getElementById('sidebarOverlay').classList.toggle('active'); }
+        function switchTab(tabName) {
+            document.querySelectorAll('.section-content').forEach(s => s.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            const navButtons = document.querySelectorAll('.nav-item');
+            navButtons.forEach(i => i.classList.remove('active'));
+            navButtons.forEach(btn => { if(btn.onclick.toString().includes(`switchTab('${tabName}')`)){ btn.classList.add('active'); } });
+            if (window.innerWidth < 1024) toggleSidebar();
+        }
+        function showNotification(title, message, type) { const n=document.getElementById('notification'),i=document.getElementById('notificationIcon');let h,c;document.getElementById('notificationTitle').textContent=title;document.getElementById('notificationMessage').textContent=message;switch(type){case 'success':h='<svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>';c='bg-green-500';break;case 'error':h='<svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,7A1.5,1.5 0 0,1 13.5,8.5A1.5,1.5 0 0,1 12,10A1.5,1.5 0 0,1 10.5,8.5A1.5,1.5 0 0,1 12,7M10.5,12H13.5V17H10.5V12Z"/></svg>';c='bg-red-600';break;}i.innerHTML=h;i.className=`w-8 h-8 text-white rounded-full flex items-center justify-center ${c}`;n.classList.remove('translate-x-full');setTimeout(()=>hideNotification(),5000);}
+        function hideNotification() { document.getElementById('notification').classList.add('translate-x-full'); }
+        const studentModal=document.getElementById('studentDetailsModal'),studentModalBody=document.getElementById('student-modal-body');function showStudentDetailsModal(s){studentModalBody.innerHTML='';const d={"Full Name":s.name,Email:s.email,"Student ID":s.student_id,Institution:s.institution_name,"Joining Year":s.joining_year,Phone:s.phone_number,"Date of Birth":s.date_of_birth};for(const[k,v]of Object.entries(d)){const e=document.createElement('div');e.className='glass-card p-3 rounded-lg';e.innerHTML=`<p class="text-xs text-gray-500">${k}</p><p class="font-semibold text-gray-800">${v||'N/A'}</p>`;studentModalBody.appendChild(e)}studentModal.style.display='flex'}
+        function closeStudentModal(){studentModal.style.display='none'}
+        function removeStudent(uid,name){if(confirm(`Are you sure you want to remove "${name}"?`)){fetch('/api/remove-student',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:uid})}).then(r=>r.json()).then(d=>{if(d.success){showNotification('Success',`Student ${name} removed.`,'success');document.getElementById(`student-row-${uid}`).remove()}else{showNotification('Error',d.message||'Failed to remove.','error')}}).catch(e=>showNotification('Error','A network error occurred.','error'))}}
+        const modal=document.getElementById('certificateModal'),modalBody=document.getElementById('modal-content-body');function viewCertificateData(c){let h='<dl class="grid grid-cols-3 gap-x-4 gap-y-2">';const f=k=>k.replace(/_/g,' ').replace(/\b\w/g,l=>l.toUpperCase());for(const k in c){if(!['display_date','image_url','verifiers','verification_count','verifiers_formatted'].includes(k)&&c[k]){h+=`<dt class="col-span-1 font-semibold text-gray-800">${f(k)}</dt><dd class="col-span-2">${c[k]}</dd>`}}h+=`<dt class="col-span-1 font-semibold text-gray-800">Certificate Hash</dt><dd class="col-span-2">${c.id}</dd></dl>`;modalBody.innerHTML=h;modal.style.display='flex'}
+        function closeModal(){modal.style.display='none';modalBody.innerHTML=''}
+        const bulkUploadForm=document.getElementById('bulk-upload-form'),bulkStatusDiv=document.getElementById('bulk-upload-status');bulkUploadForm.addEventListener('submit',async function(e){e.preventDefault();const f=document.getElementById('bulk-file-input'),t=document.querySelector('input[name="cert_type"]:checked'),b=bulkUploadForm.querySelector('button[type="submit"]');if(!f.files.length||!t){showNotification('Error','Please select file and type.','error');return}const d=new FormData();d.append('bulk-file',f.files[0]);d.append('cert_type',t.value);b.disabled=true;b.querySelector('span').innerText='Processing...';bulkStatusDiv.innerHTML=`<div class="flex items-center justify-center space-x-3 text-lg"><div class="loading-animation w-6 h-6 border-2"></div><span>Processing...</span></div>`;try{const r=await fetch('/api/bulk-upload',{method:'POST',body:d}),s=await r.json();if(!r.ok)throw new Error(s.message||'Unknown error.');let h='';if(s.success){h+=`<div class="p-4 rounded-lg bg-green-500/10 border border-green-500/30 text-green-700"><h4 class="font-bold text-lg mb-2">${s.message}</h4><p>Success: <span class="font-bold">${s.success_count}</span></p><p>Failed: <span class="font-bold">${s.failure_count}</span></p>`;if(s.successful_uploads&&s.successful_uploads.length>0){h+=`<div class="mt-4 text-left text-sm bg-black/5 p-3 rounded-md max-h-60 overflow-y-auto"><p class="font-semibold mb-2">Issued:</p><table class="w-full text-xs"><thead><tr class="border-b border-gray-200"><th class="p-2 text-left">Name</th><th class="p-2 text-left">Hash</th></tr></thead><tbody>`;s.successful_uploads.forEach(c=>{h+=`<tr class="border-b border-gray-100"><td class="p-2">${c.name}</td><td class="p-2 font-mono break-all">${c.hash}</td></tr>`});h+=`</tbody></table></div>`}if(s.errors&&s.errors.length>0){h+=`<div class="mt-4 text-left text-sm bg-black/5 p-3 rounded-md max-h-40 overflow-y-auto"><p class="font-semibold mb-2">Errors:</p><ul class="list-disc list-inside space-y-1">`;s.errors.forEach(e=>{h+=`<li>${e}</li>`});h+=`</ul></div>`}h+=`</div>`}else{throw new Error(s.message)}bulkStatusDiv.innerHTML=h}catch(err){bulkStatusDiv.innerHTML=`<div class="p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-700"><h4 class="font-bold">Failed</h4><p>${err.message}</p></div>`}finally{b.disabled=false;b.querySelector('span').innerText='Upload & Process File';bulkUploadForm.reset()}});
+    </script>
+</body>
+</html>
