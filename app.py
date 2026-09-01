@@ -75,7 +75,11 @@ def landing():
 
 @app.route('/robots.txt')
 def robots():
-    return "User-agent: *\nAllow: /", 200, {'Content-Type': 'text/plain'}
+    response = app.make_response("User-agent: *\nAllow: /\n")
+    response.headers['Content-Type'] = 'text/plain'
+    response.headers['X-Robots-Tag'] = 'all'
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    return response
 
 @app.route('/admin-login', methods=['GET', 'POST'])
 def admin_login():
