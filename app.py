@@ -66,13 +66,16 @@ def convert_firestore_timestamps(data):
 # ----------------------------
 # --- Main and Login Routes ---
 # ----------------------------
-@app.route('/robots.txt')
-def robots():
-    return "User-agent: *\nAllow: /", 200, {'Content-Type': 'text/plain'}
+
+
 
 @app.route('/')
 def landing():
     return render_template('home_page.html')
+
+@app.route('/robots.txt')
+def robots():
+    return "User-agent: *\nAllow: /", 200, {'Content-Type': 'text/plain'}
 
 @app.route('/admin-login', methods=['GET', 'POST'])
 def admin_login():
