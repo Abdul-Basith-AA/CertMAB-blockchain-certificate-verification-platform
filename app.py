@@ -75,10 +75,10 @@ def landing():
 
 @app.route('/robots.txt')
 def robots():
-    response = app.make_response("User-agent: *\nAllow: /\n")
+    response = app.make_response("User-agent: *\nAllow: /\nSitemap: https://certificate-verification-blockchain.onrender.com/sitemap.xml")
     response.headers['Content-Type'] = 'text/plain'
     response.headers['X-Robots-Tag'] = 'all'
-    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Access-Control-Allow-Origin'] = '*'
     return response
 
 @app.route('/admin-login', methods=['GET', 'POST'])
