@@ -16,6 +16,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from google.cloud.firestore_v1.base_query import FieldFilter
 from flask import send_from_directory
 import pandas as pd
+from flask import send_from_directory
 from PIL import Image, ImageDraw, ImageFont
 import io
 
@@ -80,6 +81,10 @@ def robots():
     response.headers['X-Robots-Tag'] = 'all'
     response.headers['Access-Control-Allow-Origin'] = '*'
     return response
+
+@app.route('/sitemap.xml')
+def sitemap():
+    return send_from_directory('static', 'sitemap.xml', mimetype='application/xml')
 
 @app.route('/admin-login', methods=['GET', 'POST'])
 def admin_login():
