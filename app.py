@@ -84,7 +84,10 @@ def robots():
 
 @app.route('/sitemap.xml')
 def sitemap():
-    return send_from_directory('static', 'sitemap.xml', mimetype='application/xml')
+    response = app.make_response(send_from_directory('static', 'sitemap.xml'))
+    response.headers['Content-Type'] = 'application/xml; charset=utf-8'
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    return response
 
 @app.route('/admin-login', methods=['GET', 'POST'])
 def admin_login():
