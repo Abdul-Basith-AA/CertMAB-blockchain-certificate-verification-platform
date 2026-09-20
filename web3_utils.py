@@ -1,3 +1,5 @@
+from dotenv import load_dotenv
+load_dotenv()
 import json
 import os
 from web3 import Web3
@@ -7,7 +9,7 @@ from web3 import Web3
 # -------------------------------------------------------------
 ALCHEMY_RPC_URL = os.getenv(
     'ALCHEMY_RPC_URL',
-    'https://eth-sepolia.g.alchemy.com/v2/alch_V8PE21KInArfXDrG-Sg6A'
+    ''
 )
 w3 = Web3(Web3.HTTPProvider(ALCHEMY_RPC_URL))
 
@@ -16,10 +18,11 @@ w3 = Web3(Web3.HTTPProvider(ALCHEMY_RPC_URL))
 # -------------------------------------------------------------
 CONTRACT_ADDRESS = '0x0Bb5DB41ff71D4F931f9702b9972572dF796C256'
 ADMIN_ADDRESS = '0x0A2E3e774d593B17f30942CaBeb630e04048dF97'
-ADMIN_PRIVATE_KEY = os.getenv('ADMIN_PRIVATE_KEY', 'e7aacb1a0c49fe81965280d307143a1c6724b591ed7e7a97950fcf3f0432ea83')
+ADMIN_PRIVATE_KEY = os.getenv('ADMIN_PRIVATE_KEY', '')
 
-# Load the ABI generated from deploy.py
-with open('contract_abi.json', 'r') as f:
+# Use absolute path based on this file's location to ensure it works on Render
+_abi_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'contract_abi.json')
+with open(_abi_path, 'r') as f:
     abi = json.load(f)
 
 contract = w3.eth.contract(address=CONTRACT_ADDRESS, abi=abi)
@@ -72,3 +75,26 @@ def store_on_blockchain(hash_hex_string, cert_data):
         print(f"ERROR: Failed to store data on blockchain for hash {hash_hex_string}.")
         print(f"DETAILS: {e}")
         raise e
+
+
+def verify_on_blockchain(hash_hex_string):
+    """
+    Checks if a certificate hash exists on the Sepolia blockchain.
+    Returns True if the hash is found on-chain, False otherwise.
+    """
+    try:
+        hash_in_bytes = bytes.fromhex(hash_hex_string)
+        # Call the read-only getter on the smart contract (no gas needed)
+        result = contract.functions.getCertificateDetails(hash_in_bytes).call()
+        # result is a tuple of all stored fields; if studentEmail (index 1) is non-empty, cert exists
+        student_email_on_chain = result[1]
+        if student_email_on_chain and student_email_on_chain.strip():
+            print(f"✅ BLOCKCHAIN VERIFY: Hash {hash_hex_string[:16]}... found on Sepolia.")
+            return True
+        else:
+            print(f"❌ BLOCKCHAIN VERIFY: Hash {hash_hex_string[:16]}... NOT found on Sepolia.")
+            return False
+    except Exception as e:
+        print(f"ERROR: Blockchain verify failed for hash {hash_hex_string}. DETAILS: {e}")
+        # Return False so verification fails safely if blockchain is unreachable
+        return False

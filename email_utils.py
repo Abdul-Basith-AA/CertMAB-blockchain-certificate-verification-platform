@@ -1,3 +1,6 @@
+import os
+from dotenv import load_dotenv
+load_dotenv()
 import smtplib
 from flask import url_for
 from email.mime.text import MIMEText
@@ -7,7 +10,7 @@ import json
 # IMPORTANT: Replace "your_google_app_password" with your actual Google App Password.
 # You can generate one from your Google Account settings under "Security" -> "2-Step Verification" -> "App passwords".
 SENDER_EMAIL = "certchain.control@gmail.com"
-SENDER_PASSWORD = "ootv nqeu bdxv ftmk"  # Replace this!
+SENDER_PASSWORD = os.getenv('SENDER_PASSWORD', '')  # Replace this!
 ADMIN_EMAIL = "certchain.control@gmail.com"
 
 
@@ -47,8 +50,10 @@ def send_email(recipient_email, subject, html_content):
     message.attach(MIMEText(html_content, "html"))
 
     try:
-        # Using SMTP_SSL for a secure connection from the start on port 465
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        # Using SMTP_SSL with a 10-second timeout.
+        # Render's free tier blocks SMTP port 465, so this will fail fast
+        # instead of hanging and killing the gunicorn worker.
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as server:
             server.login(SENDER_EMAIL, SENDER_PASSWORD)
             server.sendmail(SENDER_EMAIL, recipient_email, message.as_string())
         print(f"✅ Email successfully sent to {recipient_email}")

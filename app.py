@@ -1,24 +1,15 @@
-from flask import Flask, render_template, request, redirect, session, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, session, url_for, flash, jsonify, send_from_directory
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
-from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
-from firebase_utils import get_all_discrepancies, update_discrepancy_status
-from flask import jsonify
-from werkzeug.security import generate_password_hash, check_password_hash
 import secrets
 import hashlib
 import os
-import subprocess
-import pyrebase
-from datetime import datetime, timezone, timedelta
-from apscheduler.schedulers.background import BackgroundScheduler
-from google.cloud.firestore_v1.base_query import FieldFilter
-from flask import send_from_directory
+import threading
 import pandas as pd
-from flask import send_from_directory
-from PIL import Image, ImageDraw, ImageFont
-import io
+
+from datetime import datetime, timezone, timedelta
+from google.cloud.firestore_v1.base_query import FieldFilter
 
 # --- Import utility functions ---
 from firebase_utils import (
@@ -27,25 +18,29 @@ from firebase_utils import (
     get_data_by_hash, record_verification, store_to_firebase,
     get_certificates_by_email, get_institution_certificates,
     get_students_by_institution, get_institution_verification_count,
-    create_notification, get_notifications, delete_notifications,get_admin_report_data
+    create_notification, get_notifications, delete_notifications, get_admin_report_data
 )
 from email_utils import (
     send_admin_signup_notification, send_approval_email, send_denial_email,
-    send_certificate_issuance_email, send_verification_email,send_discrepancy_alert_email,send_contact_form_email
+    send_certificate_issuance_email, send_verification_email,
+    send_contact_form_email, send_password_reset_email
 )
 from pinata_utils import upload_to_pinata
-from web3_utils import store_on_blockchain
+from web3_utils import store_on_blockchain, verify_on_blockchain
 
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET_KEY', 'a-very-secret-key-that-is-long-and-secure')
 
 # --- Firebase Admin Initialization ---
+# Render stores secret files at /etc/secrets/<filename>. This handles both Render and local.
+_firebase_key_path = '/etc/secrets/firebase-key1.json' if os.path.exists('/etc/secrets/firebase-key1.json') else 'firebase-key1.json'
 if not firebase_admin._apps:
-    cred = credentials.Certificate("firebase-key1.json")
+    cred = credentials.Certificate(_firebase_key_path)
     firebase_admin.initialize_app(cred)
 db = firestore.client()
 
 from firebase_auth_utils import login_user, send_password_reset
+
 
 def convert_firestore_timestamps(data):
     """
@@ -143,10 +138,9 @@ def admin_dashboard():
             
     except Exception as e:
         print(f"Error fetching feedback: {e}")
-    all_discrepancies = get_all_discrepancies()
     
 
-    return render_template('admin_dashboard.html', stats=stats,all_feedback=all_feedback, all_institutions=all_institutions, all_companies=all_companies, all_students=all_students, pending_institutions=pending_institutions, pending_companies=pending_companies, all_certificates=all_certificates, institution_names=institution_names,all_discrepancies=all_discrepancies)
+    return render_template('admin_dashboard.html', stats=stats,all_feedback=all_feedback, all_institutions=all_institutions, all_companies=all_companies, all_students=all_students, pending_institutions=pending_institutions, pending_companies=pending_companies, all_certificates=all_certificates, institution_names=institution_names)
 
 
 @app.route('/api/admin/view/<type>/<id>')
@@ -410,8 +404,22 @@ def bulk_upload():
 
                 if 'email' not in data or pd.isna(data['email']): raise ValueError("Missing 'email'")
                 image_path = data.get('image')
-                if not image_path or pd.isna(image_path): raise ValueError("Missing 'image'")
-                if not os.path.exists(image_path): raise FileNotFoundError(f"Image not found: {image_path}")
+                if not image_path or pd.isna(image_path): raise ValueError("Missing 'image' column in the spreadsheet")
+
+                # On cloud (Render), local file paths don't work.
+                # The 'image' column must be a public URL (e.g., from Google Drive, Imgur, etc.)
+                image_url_str = str(image_path).strip()
+                if image_url_str.startswith('http://') or image_url_str.startswith('https://'):
+                    # It's already a URL — use it directly without uploading to Pinata
+                    data['image_url'] = image_url_str
+                elif os.path.exists(image_url_str):
+                    # Local path (works only when running locally, not on Render)
+                    with open(image_url_str, 'rb') as image_file:
+                        image_filename = os.path.basename(image_url_str)
+                        image_file_for_upload = FileStorage(stream=image_file, filename=image_filename, content_type=f'image/{image_filename.split(".")[-1]}')
+                        data['image_url'] = upload_to_pinata(image_file_for_upload)
+                else:
+                    raise ValueError(f"Image not accessible: '{image_url_str}'. On the cloud, 'image' must be a public URL (https://...).")
 
                 if cert_type == 'degree':
                     concat_str = (f"{data.get('name', '')}{data.get('institute', '')}"
@@ -538,10 +546,26 @@ def upload():
     try:
         data["image_url"] = upload_to_pinata(image)
         store_to_firebase(hash_val, data)
-        # --- ✅ THE FIX IS HERE ---
-        store_on_blockchain(hash_val, data) # Pass the entire data dictionary
-        send_certificate_issuance_email(data['email'], data['name'], data['course'], institution_name)
-        create_notification('admin', f"'{institution_name}' issued a '{data['course']}' certificate to '{data['name']}'.", '/admin-dashboard')
+        store_on_blockchain(hash_val, data)
+
+        # ✅ Send email & notification in a background thread so the response
+        # is returned immediately. Render blocks SMTP, so this prevents a
+        # gunicorn worker timeout from crashing the upload.
+        def send_notifications_async(app_ctx, email, name, course, inst_name):
+            with app_ctx:
+                try:
+                    send_certificate_issuance_email(email, name, course, inst_name)
+                    create_notification('admin', f"'{inst_name}' issued a '{course}' certificate to '{name}'.", '/admin-dashboard')
+                except Exception as e:
+                    print(f"Background notification error: {e}")
+
+        import threading
+        threading.Thread(
+            target=send_notifications_async,
+            args=(app.app_context(), data['email'], data['name'], data['course'], institution_name),
+            daemon=True
+        ).start()
+
         return jsonify({'success': True, 'hash': hash_val, 'message': 'Certificate uploaded!'})
     except Exception as e:
         return jsonify({'success': False, 'message': f'An error occurred: {e}'}), 500
@@ -550,19 +574,49 @@ def upload():
 def verify():
     if "company_email" not in session: return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     hash_val = request.form['hash']
+
+    # Step 1: Check if certificate data exists in Firebase
     data = get_data_by_hash(hash_val)
-    if data:
-        company_name = session.get('company_name', 'A Company')
-        record_verification(hash_val, company_name, session['company_email'])
-        send_verification_email(data['email'], data['name'], company_name)
-        try:
-            student_user = auth.get_user_by_email(data['email'])
-            create_notification(student_user.uid, f"Your '{data.get('course')}' certificate was verified by {company_name}.", '/student-dashboard')
-        except Exception as e:
-            print(f"Could not create student notification: {e}")
-        create_notification('admin', f"'{company_name}' verified a certificate for '{data['name']}'.", '/admin-dashboard')
-        return jsonify({'success': True, 'data': data})
-    return jsonify({'success': False, 'message': 'Certificate hash not found!'})
+    if not data:
+        return jsonify({'success': False, 'message': 'Certificate hash not found in our records!'})
+
+    # Step 2: ✅ THE REAL BLOCKCHAIN CHECK — Verify the hash actually exists on Sepolia
+    # This is the core security feature: it catches any tampering with Firebase data.
+    blockchain_verified = verify_on_blockchain(hash_val)
+    if not blockchain_verified:
+        return jsonify({
+            'success': False,
+            'message': '⚠️ SECURITY ALERT: This certificate hash was found in our database but DOES NOT exist on the blockchain. It may have been tampered with!'
+        })
+
+    # Step 3: Both checks passed — record the verification and notify parties
+    company_name = session.get('company_name', 'A Company')
+    record_verification(hash_val, company_name, session['company_email'])
+
+    # ✅ Send all emails and notifications in a background thread
+    def send_verify_notifications_async(app_ctx, cert_data, co_name, co_email):
+        with app_ctx:
+            try:
+                send_verification_email(cert_data['email'], cert_data['name'], co_name)
+                try:
+                    student_user = auth.get_user_by_email(cert_data['email'])
+                    create_notification(student_user.uid, f"Your '{cert_data.get('course')}' certificate was verified by {co_name}.", '/student-dashboard')
+                except Exception as e:
+                    print(f"Could not create student notification: {e}")
+                create_notification('admin', f"'{co_name}' verified a certificate for '{cert_data['name']}'.", '/admin-dashboard')
+            except Exception as e:
+                print(f"Background verify notification error: {e}")
+
+    import threading
+    threading.Thread(
+        target=send_verify_notifications_async,
+        args=(app.app_context(), data, company_name, session['company_email']),
+        daemon=True
+    ).start()
+
+    return jsonify({'success': True, 'data': data})
+
+
 
 # ---------------------------------------------
 # --- Notification API Routes & Logout ---
@@ -644,85 +698,6 @@ def submit_feedback():
         return jsonify({'error': 'An internal server error occurred'}), 500
 
 # PASTE THIS DEBUG VERSION INTO app.py
-def run_verification_script():
-    with app.app_context():
-        print("SCHEDULER: Triggering cross-verification script...")
-        script_path = os.path.join(os.path.dirname(__file__), 'scripts', 'runVerification.js')
-        try:
-            result = subprocess.run(
-                ['node', script_path], 
-                capture_output=True, 
-                text=True, 
-                check=True,
-                timeout=300
-            )
-            print("SCHEDULER: Script executed successfully.")
-            print("--- SCRIPT OUTPUT ---")
-            print(result.stdout)
-            print("---------------------")
-
-            for line in result.stdout.splitlines():
-                if line.strip().startswith("Logged discrepancy for"):
-                    try:
-                        hash_val = line.strip().split()[3]
-                        print(f"✅ SCHEDULER: Detected discrepancy for hash: {hash_val}. Preparing alerts...")
-                        
-                        discrepancy_query = db.collection('discrepancies').where(filter=FieldFilter('certificateHash', '==', hash_val)).limit(1).stream()
-                        discrepancy_doc = next(discrepancy_query, None)
-                        
-                        if discrepancy_doc:
-                            discrepancy_data = discrepancy_doc.to_dict()
-                            
-                            # --- ✅ THE ROBUST FIX ---
-                            # Clean the entire data object of any Firestore timestamps before using it.
-                            sanitized_data = convert_firestore_timestamps(discrepancy_data)
-                            # --- END OF FIX ---
-
-                            print(f"📧 SCHEDULER: Sending email for issue: {sanitized_data.get('issue')}")
-                            # Pass the fully cleaned data to the email function
-                            send_discrepancy_alert_email(sanitized_data) 
-                            
-                            notification_message = f"Security Breach: Discrepancy found for issue '{sanitized_data.get('issue', 'N/A')}'."
-                            create_notification('admin', notification_message, '/admin-dashboard')
-                            print(f"🔔 SCHEDULER: Created bell notification for admin.")
-                            
-                    except Exception as e:
-                            print(f"❌ SCHEDULER: Error processing discrepancy line: {e}")
-
-        except subprocess.CalledProcessError as e:
-            print(f"SCHEDULER: Script failed with exit code {e.returncode}.")
-            print(f"--- SCRIPT ERROR ---\n{e.stderr}\n--------------------")
-        except Exception as e:
-            print(f"SCHEDULER: An unexpected error occurred: {e}")
-
-# ADD THIS HELPER FUNCTION TO THE TOP OF app.py
-def convert_firestore_timestamps(data):
-    """
-    Recursively searches a dictionary or list for Firestore timestamp objects
-    and converts them to simple, JSON-serializable strings.
-    """
-    if isinstance(data, dict):
-        return {key: convert_firestore_timestamps(value) for key, value in data.items()}
-    elif isinstance(data, list):
-        return [convert_firestore_timestamps(element) for element in data]
-    # This is the class name from your debug log
-    elif hasattr(data, '__class__') and data.__class__.__name__ == 'DatetimeWithNanoseconds':
-        return data.strftime('%Y-%m-%d %H:%M:%S UTC')
-    else:
-        return data
-# --- API Routes for Security Alerts ---
-@app.route('/api/discrepancies', methods=['GET'])
-def api_get_discrepancies():
-    discrepancies = get_all_discrepancies()
-    return jsonify(discrepancies)
-
-@app.route('/api/discrepancies/<string:doc_id>/resolve', methods=['POST'])
-def api_resolve_discrepancy(doc_id):
-    success = update_discrepancy_status(doc_id, 'resolved')
-    if success:
-        return jsonify({'message': 'Discrepancy marked as resolved.'}), 200
-    else:
-        return jsonify({'error': 'Failed to update discrepancy status.'}), 500
 # --- Password Reset Routes ---
 
 @app.route('/forgot-password/<user_type>', methods=['GET', 'POST'])
@@ -758,9 +733,8 @@ def forgot_password(user_type):
             'expires_at': expiry
         })
 
-        # This assumes you have an email_utils.py function for this
-        from email_utils import send_password_reset_email
         send_password_reset_email(email, token)
+
         
         flash('A password reset link has been sent to your email.', 'success')
         return redirect(url_for(f'{user_type}_login'))
@@ -826,9 +800,8 @@ def contact_us():
 
 
 
+
 if __name__ == '__main__':
-    scheduler = BackgroundScheduler(daemon=True)
-    scheduler.add_job(run_verification_script, 'interval', days=1)
-    scheduler.start()
-    print("Cross-verification scheduler started. The job will run every 24 hours.")
-    app.run(debug=True, use_reloader=False)
+    # debug=False is important for production safety.
+    # On Render, gunicorn is used instead of this block.
+    app.run(debug=False, use_reloader=False)

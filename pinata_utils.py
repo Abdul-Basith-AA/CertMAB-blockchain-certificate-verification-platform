@@ -1,7 +1,10 @@
+import os
+from dotenv import load_dotenv
+load_dotenv()
 import requests
 
-PINATA_API_KEY = 'ced76d645159a8e7d604'
-PINATA_SECRET_API_KEY = '7b0be9f21cbdc5faf526d16429cba47b0e68ea5dd52406eb330996726321120a'
+PINATA_API_KEY = os.getenv('PINATA_API_KEY', '')
+PINATA_SECRET_API_KEY = os.getenv('PINATA_SECRET_API_KEY', '')
 
 def upload_to_pinata(image_file):
     url = "https://api.pinata.cloud/pinning/pinFileToIPFS"

@@ -4,10 +4,13 @@ from datetime import datetime, timezone, timedelta
 from google.cloud.firestore_v1.base_query import FieldFilter
 import pandas as pd
 from collections import defaultdict
+import os
 
 # Initialize Firebase app (only once)
+# Render stores secret files at /etc/secrets/<filename>. This handles both Render and local.
+_firebase_key_path = '/etc/secrets/firebase-key1.json' if os.path.exists('/etc/secrets/firebase-key1.json') else 'firebase-key1.json'
 if not firebase_admin._apps:
-    cred = credentials.Certificate("firebase-key1.json")
+    cred = credentials.Certificate(_firebase_key_path)
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
