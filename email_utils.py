@@ -9,9 +9,9 @@ import json
 # --- Hardcoded Credentials as Requested ---
 # IMPORTANT: Replace "your_google_app_password" with your actual Google App Password.
 # You can generate one from your Google Account settings under "Security" -> "2-Step Verification" -> "App passwords".
-SENDER_EMAIL = "certchain.control@gmail.com"
+SENDER_EMAIL = "certmab.control@gmail.com"
 SENDER_PASSWORD = os.getenv('SENDER_PASSWORD', '')  # Replace this!
-ADMIN_EMAIL = "certchain.control@gmail.com"
+ADMIN_EMAIL = "certmab.control@gmail.com"
 
 
 def send_password_reset_email(recipient_email, token):
@@ -19,16 +19,16 @@ def send_password_reset_email(recipient_email, token):
     # The _external=True is crucial to generate a full URL
     reset_url = url_for('reset_password', token=token, _external=True)
     
-    subject = "CertChain - Password Reset Request"
+    subject = "CertMAB - Password Reset Request"
     body = f"""
     <p>Hello,</p>
-    <p>You requested a password reset for your CertChain account.</p>
+    <p>You requested a password reset for your CertMAB account.</p>
     <p>Please click the link below to set a new password. This link is valid for 1 hour.</p>
     <p><a href="{reset_url}" style="color: #3B82F6; text-decoration: none;">Reset Your Password</a></p>
     <p>If you did not request this, please ignore this email.</p>
     <br>
     <p>Thank you,</p>
-    <p>The CertChain Team</p>
+    <p>The CertMAB Team</p>
     """
     
     # --- ADD THIS LINE ---
@@ -45,7 +45,7 @@ def send_email(recipient_email, subject, html_content):
 
     message = MIMEMultipart("alternative")
     message["Subject"] = subject
-    message["From"] = f"CertChain Platform <{SENDER_EMAIL}>"
+    message["From"] = f"CertMAB Platform <{SENDER_EMAIL}>"
     message["To"] = recipient_email
     message.attach(MIMEText(html_content, "html"))
 
@@ -66,7 +66,7 @@ def send_email(recipient_email, subject, html_content):
 
 def send_admin_signup_notification(user_type, user_data):
     """Notifies admin about a new signup request."""
-    subject = f"New {user_type.capitalize()} Registration Request on CertChain"
+    subject = f"New {user_type.capitalize()} Registration Request on CertMAB"
     name = user_data.get('institution_name') or user_data.get('company_name')
     email = user_data.get('email')
     
@@ -86,26 +86,26 @@ def send_admin_signup_notification(user_type, user_data):
 
 def send_approval_email(recipient_email, user_type, name):
     """Informs a user that their registration has been approved."""
-    subject = "Welcome to CertChain! Your Registration is Approved"
+    subject = "Welcome to CertMAB! Your Registration is Approved"
     html_body = f"""
     <html><body style="font-family: sans-serif;">
         <h2>Congratulations, {name}!</h2>
-        <p>Your <strong>{user_type.lower()}</strong> registration on the CertChain platform has been <strong>approved</strong> by the administrator.</p>
+        <p>Your <strong>{user_type.lower()}</strong> registration on the CertMAB platform has been <strong>approved</strong> by the administrator.</p>
         <p>You can now log in to your dashboard and start using the platform's features.</p>
-        <p>Thank you for joining CertChain.</p>
+        <p>Thank you for joining CertMAB.</p>
     </body></html>
     """
     send_email(recipient_email, subject, html_body)
 
 def send_denial_email(recipient_email, user_type, name):
     """Informs a user that their registration has been denied."""
-    subject = "An Update on Your CertChain Registration"
+    subject = "An Update on Your CertMAB Registration"
     html_body = f"""
     <html><body style="font-family: sans-serif;">
         <h2>Dear {name},</h2>
-        <p>We're writing to inform you that your <strong>{user_type.lower()}</strong> registration on the CertChain platform could not be approved at this time.</p>
+        <p>We're writing to inform you that your <strong>{user_type.lower()}</strong> registration on the CertMAB platform could not be approved at this time.</p>
         <p>This may be due to incomplete information or documentation that could not be verified. If you believe this is an error, please contact our support team by replying to this email.</p>
-        <p>We appreciate your interest in CertChain.</p>
+        <p>We appreciate your interest in CertMAB.</p>
     </body></html>
     """
     send_email(recipient_email, subject, html_body)
@@ -116,26 +116,26 @@ def send_certificate_issuance_email(recipient_email, student_name, course_name, 
     html_body = f"""
     <html><body style="font-family: sans-serif;">
         <h2>Congratulations, {student_name}!</h2>
-        <p>The institution, <strong>{institution_name}</strong>, has just issued a new certificate to you on the CertChain platform.</p>
+        <p>The institution, <strong>{institution_name}</strong>, has just issued a new certificate to you on the CertMAB platform.</p>
         <ul style="list-style-type: none; padding: 0;">
             <li style="margin-bottom: 10px;"><strong>Certificate:</strong> {course_name}</li>
         </ul>
         <p>You can view your new certificate by logging into your student dashboard.</p>
-        <p>Best regards,<br/>The CertChain Team</p>
+        <p>Best regards,<br/>The CertMAB Team</p>
     </body></html>
     """
     send_email(recipient_email, subject, html_body)
 
 def send_verification_email(recipient_email, student_name, company_name):
     """Informs a student that their certificate has been verified."""
-    subject = "Security Alert: Your Certificate Was Verified on CertChain"
+    subject = "Security Alert: Your Certificate Was Verified on CertMAB"
     html_body = f"""
     <html><body style="font-family: sans-serif;">
         <h2>Hi {student_name},</h2>
         <p>This is a notification to let you know that one of your certificates was just verified by <strong>{company_name}</strong>.</p>
         <p>You can view your full verification history by logging into your student dashboard.</p>
         <p>If you do not recognize this activity, please contact support immediately.</p>
-        <p>Thank you,<br/>The CertChain Team</p>
+        <p>Thank you,<br/>The CertMAB Team</p>
     </body></html>
     """
     send_email(recipient_email, subject, html_body)
@@ -143,7 +143,7 @@ def send_verification_email(recipient_email, student_name, company_name):
 # --- NEW FUNCTION FOR DISCREPANCY ALERTS ---
 def send_discrepancy_alert_email(discrepancy_data):
     """Notifies the admin about a new data integrity discrepancy."""
-    subject = "⚠️ SECURITY ALERT: Data Discrepancy Detected on CertChain"
+    subject = "⚠️ SECURITY ALERT: Data Discrepancy Detected on CertMAB"
     
     # Pretty-print the details dictionary for better readability in the email
     details_formatted = json.dumps(discrepancy_data.get('details', {}), indent=4)
@@ -183,7 +183,7 @@ def send_contact_form_email(name, sender_email, subject, message):
     
     html_body = f"""
     <html><body style="font-family: sans-serif; line-height: 1.6;">
-        <h2>New Message from CertChain Contact Form</h2>
+        <h2>New Message from CertMAB Contact Form</h2>
         <p>You have received a new message from the website's contact form.</p>
         <hr>
         <ul style="list-style-type: none; padding: 0;">

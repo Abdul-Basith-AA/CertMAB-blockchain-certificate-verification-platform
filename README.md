@@ -1,5 +1,5 @@
 ```
-# CertChain - Blockchain-Based Certificate Verification Platform
+# CertMAB - Blockchain-Based Certificate Verification Platform
 
 A decentralized credential verification platform built on Ethereum Sepolia and Python Flask. It secures academic records using Solidity smart contracts, IPFS file storage, SHA-256 cryptographic hashing, and Firebase.
 
