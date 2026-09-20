@@ -68,7 +68,18 @@
     <div class="sidebar" id="sidebar">
         <div class="p-6">
             <div class="flex items-center justify-between mb-8">
-                <div class="flex items-center space-x-3"><div class="w-12 h-12 bg-gradient-to-r from-secondary-500 to-primary-500 rounded-xl flex items-center justify-center animate-glow"><svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3L1 9L5 11.18V17.18L12 21L19 17.18V11.18L21 10.09V17H23V9L12 3ZM18.82 9L12 12.72L5.18 9L12 5.28L18.82 9ZM17 16L12 18.72L7 16V12.27L12 15L17 12.27V16Z"/></svg></div><div><h2 class="text-xl font-bold text-gray-900">CertMAB</h2><p class="text-xs text-gray-500">Dashboard</p></div></div>
+                <div class="flex items-center space-x-3"><div class="w-12 h-12 bg-gradient-to-r from-secondary-500 to-primary-500 rounded-xl flex items-center justify-center animate-glow">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 2l8 4.5v9L12 20l-8-4.5v-9L12 2z"></path>
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"></path>
+    <circle cx="12" cy="2" r="1.5" fill="currentColor" stroke="none"></circle>
+    <circle cx="20" cy="6.5" r="1.5" fill="currentColor" stroke="none"></circle>
+    <circle cx="20" cy="15.5" r="1.5" fill="currentColor" stroke="none"></circle>
+    <circle cx="12" cy="20" r="1.5" fill="currentColor" stroke="none"></circle>
+    <circle cx="4" cy="15.5" r="1.5" fill="currentColor" stroke="none"></circle>
+    <circle cx="4" cy="6.5" r="1.5" fill="currentColor" stroke="none"></circle>
+</svg>
+                </div><div><h2 class="text-xl font-bold text-gray-900">CertMAB</h2><p class="text-xs text-gray-500">Dashboard</p></div></div>
                 <button onclick="toggleSidebar()" class="p-2 hover:bg-black/5 rounded-lg transition-colors"><svg class="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 24 24"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg></button>
             </div>
             <div class="glass-card rounded-xl p-4 mb-6"><div class="flex items-center space-x-3"><div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">{{ institution.institution_name[0]|upper }}</div><div><p class="text-gray-900 font-semibold text-sm">{{ institution.institution_name }}</p></div></div></div>
@@ -84,64 +95,18 @@
     </div>
     <canvas id="three-canvas"></canvas>
     <div class="relative z-10 container mx-auto px-4 py-6 max-w-7xl">
-        <header class="glass-card rounded-2xl p-8 mb-8 animate-fadeIn"><div class="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0"><div class="flex items-center space-x-6"><div class="relative"><div class="w-16 h-16 bg-gradient-to-r from-secondary-500 to-primary-500 rounded-2xl flex items-center justify-center animate-glow"><svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3L1 9L5 11.18V17.18L12 21L19 17.18V11.18L21 10.09V17H23V9L12 3ZM18.82 9L12 12.72L5.18 9L12 5.28L18.82 9ZM17 16L12 18.72L7 16V12.27L12 15L17 12.27V16Z"/></svg></div><div class="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full animate-pulse"></div></div><div><h1 class="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-800 via-secondary-600 to-primary-600 bg-clip-text text-transparent">Institution Dashboard</h1><p class="text-lg text-gray-600 font-medium">Blockchain Certificate Management</p></div></div><div class="flex items-center space-x-4"><button onclick="toggleSidebar()" class="w-12 h-12 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg cursor-pointer">{{ institution.institution_name[0]|upper }}</button></div></div></header>
-        <div id="user-dashboard" class="section-content active">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div onclick="switchTab('certificate-registry')" class="glass-card glass-card-hover rounded-2xl p-6 animate-fadeIn cursor-pointer" style="animation-delay: 0.1s">
-                    <div class="flex items-center justify-between"><div><p class="text-gray-500 text-sm font-medium mb-1">Total Certificates Issued</p><p class="text-4xl font-bold bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">{{ stats.total_certificates }}</p></div><div class="w-16 h-16 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-2xl flex items-center justify-center"><svg class="w-8 h-8 text-blue-500" fill="currentColor" viewBox="0 0 24 24"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg></div></div>
+        <header class="glass-card rounded-2xl p-8 mb-8 animate-fadeIn"><div class="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0"><div class="flex items-center space-x-6"><div class="relative"><div class="w-16 h-16 bg-gradient-to-r from-secondary-500 to-primary-500 rounded-2xl flex items-center justify-center animate-glow">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 2l8 4.5v9L12 20l-8-4.5v-9L12 2z"></path>
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"></path>
+    <circle cx="12" cy="2" r="1.5" fill="currentColor" stroke="none"></circle>
+    <circle cx="20" cy="6.5" r="1.5" fill="currentColor" stroke="none"></circle>
+    <circle cx="20" cy="15.5" r="1.5" fill="currentColor" stroke="none"></circle>
+    <circle cx="12" cy="20" r="1.5" fill="currentColor" stroke="none"></circle>
+    <circle cx="4" cy="15.5" r="1.5" fill="currentColor" stroke="none"></circle>
+    <circle cx="4" cy="6.5" r="1.5" fill="currentColor" stroke="none"></circle>
+</svg>
                 </div>
-                <div onclick="switchTab('certificate-registry')" class="glass-card glass-card-hover rounded-2xl p-6 animate-fadeIn cursor-pointer" style="animation-delay: 0.2s">
-                    <div class="flex items-center justify-between"><div><p class="text-gray-500 text-sm font-medium mb-1">Total Verifications on Your Certificates</p><p class="text-4xl font-bold bg-gradient-to-r from-green-500 to-emerald-500 bg-clip-text text-transparent">{{ stats.total_verifications }}</p></div><div class="w-16 h-16 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-2xl flex items-center justify-center"><svg class="w-8 h-8 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div></div>
-                </div>
-            </div>
-            <div class="glass-card rounded-2xl p-8 mb-8 animate-fadeIn" style="animation-delay: 0.5s">
-                <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center"><svg class="w-6 h-6 text-purple-500 mr-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/></svg>Registered Students</h3>
-                <div class="overflow-x-auto max-h-96"><table class="w-full"><thead><tr class="border-b border-gray-200"><th class="text-left p-4 text-gray-500 font-semibold text-sm uppercase tracking-wider">Student Name</th><th class="text-left p-4 text-gray-500 font-semibold text-sm uppercase tracking-wider">Email</th><th class="text-left p-4 text-gray-500 font-semibold text-sm uppercase tracking-wider">Student ID</th><th class="text-left p-4 text-gray-500 font-semibold text-sm uppercase tracking-wider">Actions</th></tr></thead><tbody>
-                    {% for student in students %}
-                    <tr class="student-row border-b border-gray-100" id="student-row-{{ student.uid }}"><td class="p-4"><p class="text-gray-800 font-semibold">{{ student.name }}</p></td><td class="p-4"><p class="text-gray-600">{{ student.email }}</p></td><td class="p-4"><p class="text-gray-600">{{ student.student_id }}</p></td><td class="p-4 flex items-center space-x-2"><button onclick='showStudentDetailsModal({{ student|tojson }})' class="btn-primary px-3 py-1 rounded-md text-sm font-semibold transition-transform hover:scale-105 text-white">View</button><button onclick="removeStudent('{{ student.uid }}', '{{ student.name }}')" class="btn-danger px-3 py-1 rounded-md text-sm font-semibold transition-transform hover:scale-105">Remove</button></td></tr>
-                    {% else %} <tr><td colspan="4" class="text-center p-8 text-gray-500">No students registered yet.</td></tr> {% endfor %}
-                </tbody></table></div>
-            </div>
-        </div>
-
-        <div id="profile" class="section-content">
-            <div class="glass-card rounded-2xl p-8 animate-fadeIn">
-                <div class="text-center mb-8">
-                    <div class="w-24 h-24 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 text-white font-bold text-2xl animate-float">
-                        {{ institution.institution_name[0]|upper }}
-                    </div>
-                    <h2 class="text-3xl font-bold text-gray-900 mb-4">Institution Profile</h2>
-                </div>
-                <div class="max-w-4xl mx-auto">
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <div class="glass-card rounded-xl p-6">
-                            <h3 class="text-xl font-semibold text-gray-900 mb-6 flex items-center"><svg class="w-5 h-5 text-purple-500 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/></svg> Information</h3>
-                            <div class="space-y-4">
-                                <div><label class="block text-gray-700 font-medium mb-2">Institution Name</label><input type="text" value="{{ institution.institution_name }}" class="w-full px-4 py-3 search-input rounded-xl text-gray-800" readonly /></div>
-                                <div><label class="block text-gray-700 font-medium mb-2">Email</label><input type="email" value="{{ institution.email }}" class="w-full px-4 py-3 search-input rounded-xl text-gray-800" readonly /></div>
-                                <div><label class="block text-gray-700 font-medium mb-2">Institution Type</label><input type="text" value="{{ institution.institution_type }}" class="w-full px-4 py-3 search-input rounded-xl text-gray-800" readonly /></div>
-                                <div><label class="block text-gray-700 font-medium mb-2">Registration Number</label><input type="text" value="{{ institution.registration_number }}" class="w-full px-4 py-3 search-input rounded-xl text-gray-800" readonly /></div>
-                                <div><label class="block text-gray-700 font-medium mb-2">Contact Number</label><input type="text" value="{{ institution.contact_number }}" class="w-full px-4 py-3 search-input rounded-xl text-gray-800" readonly /></div>
-                                <div><label class="block text-gray-700 font-medium mb-2">Website</label><input type="text" value="{{ institution.website_url }}" class="w-full px-4 py-3 search-input rounded-xl text-gray-800" readonly /></div>
-                            </div>
-                        </div>
-                        <div class="glass-card rounded-xl p-6">
-                            <h3 class="text-xl font-semibold text-gray-900 mb-6 flex items-center"><svg class="w-5 h-5 text-purple-500 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z"/></svg> Affiliation</h3>
-                            <div class="space-y-4">
-                                <div><label class="block text-gray-700 font-medium mb-2">Affiliated Board</label><input type="text" value="{{ institution.affiliated_board }}" class="w-full px-4 py-3 search-input rounded-xl text-gray-800" readonly /></div>
-                                <div><label class="block text-gray-700 font-medium mb-2">Accreditation Details</label><input type="text" value="{{ institution.accreditation_details }}" class="w-full px-4 py-3 search-input rounded-xl text-gray-800" readonly /></div>
-                                <div><label class="block text-gray-700 font-medium mb-2">Address</label><textarea rows="5" class="w-full px-4 py-3 search-input rounded-xl resize-none text-gray-800" readonly>{{ institution.address }}</textarea></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div id="upload-certificate" class="section-content space-y-8">
-            <div class="glass-card rounded-2xl p-8 animate-fadeIn">
-                <div class="text-center mb-8">
-                    <div class="w-20 h-20 bg-gradient-to-r from-secondary-500 to-primary-500 rounded-3xl flex items-center justify-center mx-auto mb-4 animate-float"><svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z M12,11L16,15H13.5V19H10.5V15H8L12,11Z"/></svg></div>
                     <h2 class="text-3xl font-bold text-gray-900 mb-4">Issue a New Certificate</h2>
                     <p class="text-gray-500 max-w-md mx-auto">Issue a single Degree or Additional certificate using a web form.</p>
                 </div>
@@ -150,7 +115,18 @@
         
             <div class="glass-card rounded-2xl p-8 animate-fadeIn">
                 <div class="text-center mb-8">
-                    <div class="w-20 h-20 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-3xl flex items-center justify-center mx-auto mb-4 animate-float"><svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M16.5,6V3.5C16.5,2.12 15.38,1 14,1H10C8.62,1 7.5,2.12 7.5,3.5V6H4V20H20V6H16.5M10,3H14V6H10V3M18,18H6V8H18V18M15,10H9V12H15V10M15,13H9V15H15V13Z" /></svg></div>
+                    <div class="w-20 h-20 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-3xl flex items-center justify-center mx-auto mb-4 animate-float">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 2l8 4.5v9L12 20l-8-4.5v-9L12 2z"></path>
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"></path>
+    <circle cx="12" cy="2" r="1.5" fill="currentColor" stroke="none"></circle>
+    <circle cx="20" cy="6.5" r="1.5" fill="currentColor" stroke="none"></circle>
+    <circle cx="20" cy="15.5" r="1.5" fill="currentColor" stroke="none"></circle>
+    <circle cx="12" cy="20" r="1.5" fill="currentColor" stroke="none"></circle>
+    <circle cx="4" cy="15.5" r="1.5" fill="currentColor" stroke="none"></circle>
+    <circle cx="4" cy="6.5" r="1.5" fill="currentColor" stroke="none"></circle>
+</svg>
+                </div>
                     <h2 class="text-3xl font-bold text-gray-900 mb-4">Bulk Issue Certificates</h2>
                     <p class="text-gray-500 max-w-lg mx-auto">Upload an Excel (.xlsx) file to issue multiple certificates at once.</p>
                 </div>
@@ -194,7 +170,18 @@
             {% else %}<tr><td colspan="5" class="text-center p-8 text-gray-500">You have not issued any certificates yet.</td></tr>{% endfor %}
         </tbody></table></div></div></div>
 
-        <div id="feedback" class="section-content"><div class="glass-card rounded-2xl p-8 animate-fadeIn"><div class="text-center mb-8"><div class="w-20 h-20 bg-gradient-to-r from-secondary-500 to-primary-500 rounded-3xl flex items-center justify-center mx-auto mb-4 animate-float"><svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M9,22A1,1 0 0,1 8,21V18H4A2,2 0 0,1 2,16V4C2,2.89 2.9,2 4,2H20A2,2 0 0,1 22,4V16A2,2 0 0,1 20,18H13.9L10.2,21.71C10,21.9 9.75,22 9.5,22V22H9Z"/></svg></div><h2 class="text-3xl font-bold text-gray-900 mb-4">Feedback & Support</h2></div><div class="max-w-2xl mx-auto"><form id="inst-feedback-form" onsubmit="event.preventDefault(); submitFeedback();"><div class="space-y-6"><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div><label class="block text-gray-700 font-medium mb-2">Institution Name</label><input type="text" value="{{ institution.institution_name }}" class="w-full px-4 py-3 search-input rounded-xl text-gray-800" readonly /></div><div><label class="block text-gray-700 font-medium mb-2">Email</label><input type="email" value="{{ institution.email }}" class="w-full px-4 py-3 search-input rounded-xl text-gray-800" readonly /></div></div><div><label class="block text-gray-700 font-medium mb-2">Category</label><select id="feedback-category" class="w-full px-4 py-3 search-input rounded-xl text-gray-800"><option>Select category</option><option>Bug Report</option><option>Feature Request</option><option>General Feedback</option></select></div><div><label class="block text-gray-700 font-medium mb-2">Subject</label><input id="feedback-subject" type="text" class="w-full px-4 py-3 search-input rounded-xl text-gray-800" /></div><div><label class="block text-gray-700 font-medium mb-2">Message</label><textarea id="feedback-message" rows="6" class="w-full px-4 py-3 search-input rounded-xl resize-none text-gray-800"></textarea></div><div class="text-center"><button type="submit" class="btn-primary text-white inline-flex items-center space-x-3 px-10 py-4 rounded-2xl font-semibold text-lg"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M2,21L23,12L2,3V10L17,12L2,14V21Z"/></svg><span>Submit</span></button></div></div></form></div></div></div>
+        <div id="feedback" class="section-content"><div class="glass-card rounded-2xl p-8 animate-fadeIn"><div class="text-center mb-8"><div class="w-20 h-20 bg-gradient-to-r from-secondary-500 to-primary-500 rounded-3xl flex items-center justify-center mx-auto mb-4 animate-float">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 2l8 4.5v9L12 20l-8-4.5v-9L12 2z"></path>
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"></path>
+    <circle cx="12" cy="2" r="1.5" fill="currentColor" stroke="none"></circle>
+    <circle cx="20" cy="6.5" r="1.5" fill="currentColor" stroke="none"></circle>
+    <circle cx="20" cy="15.5" r="1.5" fill="currentColor" stroke="none"></circle>
+    <circle cx="12" cy="20" r="1.5" fill="currentColor" stroke="none"></circle>
+    <circle cx="4" cy="15.5" r="1.5" fill="currentColor" stroke="none"></circle>
+    <circle cx="4" cy="6.5" r="1.5" fill="currentColor" stroke="none"></circle>
+</svg>
+                </div><h2 class="text-3xl font-bold text-gray-900 mb-4">Feedback & Support</h2></div><div class="max-w-2xl mx-auto"><form id="inst-feedback-form" onsubmit="event.preventDefault(); submitFeedback();"><div class="space-y-6"><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div><label class="block text-gray-700 font-medium mb-2">Institution Name</label><input type="text" value="{{ institution.institution_name }}" class="w-full px-4 py-3 search-input rounded-xl text-gray-800" readonly /></div><div><label class="block text-gray-700 font-medium mb-2">Email</label><input type="email" value="{{ institution.email }}" class="w-full px-4 py-3 search-input rounded-xl text-gray-800" readonly /></div></div><div><label class="block text-gray-700 font-medium mb-2">Category</label><select id="feedback-category" class="w-full px-4 py-3 search-input rounded-xl text-gray-800"><option>Select category</option><option>Bug Report</option><option>Feature Request</option><option>General Feedback</option></select></div><div><label class="block text-gray-700 font-medium mb-2">Subject</label><input id="feedback-subject" type="text" class="w-full px-4 py-3 search-input rounded-xl text-gray-800" /></div><div><label class="block text-gray-700 font-medium mb-2">Message</label><textarea id="feedback-message" rows="6" class="w-full px-4 py-3 search-input rounded-xl resize-none text-gray-800"></textarea></div><div class="text-center"><button type="submit" class="btn-primary text-white inline-flex items-center space-x-3 px-10 py-4 rounded-2xl font-semibold text-lg"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M2,21L23,12L2,3V10L17,12L2,14V21Z"/></svg><span>Submit</span></button></div></div></form></div></div></div>
     </div>
 
     <div id="notification" class="fixed top-4 right-4 z-50 transform translate-x-full transition-transform duration-300"><div class="glass-card rounded-xl p-4 min-w-80 shadow-lg"><div class="flex items-center space-x-3"><div id="notificationIcon" class="w-8 h-8 rounded-full flex items-center justify-center"></div><div><p id="notificationTitle" class="text-gray-800 font-semibold"></p><p id="notificationMessage" class="text-gray-500 text-sm"></p></div><button onclick="hideNotification()" class="text-gray-400 hover:text-gray-800"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg></button></div></div></div>
