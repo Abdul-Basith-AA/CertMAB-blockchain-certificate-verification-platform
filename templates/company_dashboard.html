@@ -105,6 +105,18 @@
     </style>
 </head>
 <body class="min-h-screen overflow-x-hidden">
+<!-- Mobile Header -->
+<div class="lg:hidden fixed top-0 left-0 w-full h-16 bg-white border-b border-gray-200 z-40 flex items-center justify-between px-4">
+    <div class="flex items-center">
+        <button onclick="document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('mobile-overlay').classList.toggle('hidden');" class="text-gray-600 focus:outline-none">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </button>
+        <span class="ml-4 font-bold text-lg text-gray-800">CertMAB</span>
+    </div>
+</div>
+<!-- Mobile Overlay -->
+<div id="mobile-overlay" class="lg:hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-40 hidden" onclick="document.getElementById('sidebar').classList.add('-translate-x-full'); this.classList.add('hidden');"></div>
+
     <canvas id="three-canvas"></canvas>
 
     <div id="sidebarOverlay" class="sidebar-overlay fixed inset-0 z-40 lg:hidden" onclick="toggleSidebar()"></div>
@@ -175,7 +187,7 @@
         </div>
     </aside>
 
-    <main class="transition-all duration-400 lg:ml-72">
+    <main class="transition-all duration-400 lg:ml-72 pt-16 lg:pt-0">
         <div class="container mx-auto px-6 py-8">
             <header class="card rounded-2xl p-6 mb-8 animate-fadeIn">
                 <div class="flex justify-between items-center">
